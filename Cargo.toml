@@ -1,0 +1,22 @@
+[package]
+name = "closed-interval-set"
+version = "0.1.0"
+authors = ["Paul Khuong"]
+edition = "2021"
+description = "Unions of closed intervals as containers of pairs"
+repository = "https://github.com/pkhuong/closed-interval-set"
+license = "MIT"
+
+[dependencies]
+
+[dev-dependencies]
+proptest = "1"
+
+[lints.rust]
+# Avoid warnings about `#[cfg_attr(coverage_nightly, coverage(off))]`
+# https://github.com/taiki-e/cargo-llvm-cov?tab=readme-ov-file#exclude-code-from-coverage
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage,coverage_nightly)'] }
+
+# RUSTDOCFLAGS="--html-in-header katex-header.html"
+[package.metadata.docs.rs]
+rustdoc-args = [ "--html-in-header", "katex-header.html" ]

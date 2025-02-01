@@ -1,0 +1,10 @@
+/target
+/mutants.out/
+/mutants.out.old/
+/proptest-regressions
+Cargo.lock
+*~
+*.swp
+*.swo
+.#*
+*#
