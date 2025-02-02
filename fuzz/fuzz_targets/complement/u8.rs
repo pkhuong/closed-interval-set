@@ -26,6 +26,17 @@ fn check(ranges: Vec<(T, T)>) {
     assert!(is_normalized(complement_2.inner()));
     assert_eq!(&complement_1, &complement_2);
 
+    // intersection(ranges, complement) == emptyset
+    let intersection_1 = ranges
+        .iter()
+        .intersect_vec(&complement_1)
+        .collect_range_vec();
+    let intersection_2 = complement_2.intersect(&ranges);
+    assert!(is_normalized(intersection_1.inner()));
+    assert!(is_normalized(intersection_2.inner()));
+    assert!(intersection_1.is_empty());
+    assert!(intersection_2.is_empty());
+
     let universe_1 = union_vec(complement_1, &ranges);
     let universe_2 = union_vec(complement_2, &ranges);
 

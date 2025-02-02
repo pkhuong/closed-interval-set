@@ -6,6 +6,7 @@
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
 
 mod complement;
+mod intersection;
 pub mod iterator_wrapper;
 mod normalize;
 mod primitive_endpoint;
@@ -21,6 +22,7 @@ pub use normalize::is_normalized;
 pub use normalize::normalize_vec;
 
 pub use complement::complement_vec;
+pub use intersection::intersect_vec;
 pub use union::union_vec;
 
 /// An [`Endpoint`] is the left or right limit of a closed interval
@@ -153,6 +155,22 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
     #[inline(always)]
     fn complement(self) -> complement::ComplementIterator<Self> {
         complement::ComplementIterator::new(self)
+    }
+
+    /// Returns an iterator for the intersection of this normalized range iterator
+    /// and another [`RangeVec`] of normalized ranges.
+    ///
+    /// The result is also a [`NormalizedRangeIter`].
+    #[inline(always)]
+    fn intersect_vec<'a>(
+        self,
+        other: &'a RangeVec<<Self::Item as ClosedRange>::EndT>,
+    ) -> impl 'a + NormalizedRangeIter<Item = Pair<<Self::Item as ClosedRange>::EndT>>
+    where
+        Self: 'a,
+    {
+        // Unsafe because the interface assumes both arguments are normalized.
+        unsafe { crate::intersection::intersect(self, other) }
     }
 
     /// Collects the contents of a [`NormalizedRangeIter`] into a [`RangeVec`]

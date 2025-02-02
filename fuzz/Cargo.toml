@@ -235,3 +235,77 @@ path = "fuzz_targets/complement/i128.rs"
 test = false
 doc = false
 bench = false
+
+
+# intersect
+# cargo fuzz list | grep intersect_ | \
+#     parallel --color --tag -P 4 --line-buffer cargo fuzz run {} -- -max_total_time=7200
+[[bin]]
+name = "intersect_u8"
+path = "fuzz_targets/intersect/u8.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "intersect_u16"
+path = "fuzz_targets/intersect/u16.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "intersect_u32"
+path = "fuzz_targets/intersect/u32.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "intersect_u64"
+path = "fuzz_targets/intersect/u64.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "intersect_u128"
+path = "fuzz_targets/intersect/u128.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "intersect_i8"
+path = "fuzz_targets/intersect/i8.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "intersect_i16"
+path = "fuzz_targets/intersect/i16.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "intersect_i32"
+path = "fuzz_targets/intersect/i32.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "intersect_i64"
+path = "fuzz_targets/intersect/i64.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "intersect_i128"
+path = "fuzz_targets/intersect/i128.rs"
+test = false
+doc = false
+bench = false
