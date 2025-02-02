@@ -7,8 +7,10 @@
 
 pub mod iterator_wrapper;
 mod primitive_endpoint;
+mod range_case;
 mod range_vec;
 
+pub use range_case::RangeCase;
 pub use range_vec::RangeVec;
 
 /// An [`Endpoint`] is the left or right limit of a closed interval
