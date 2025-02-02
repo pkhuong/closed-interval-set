@@ -5,6 +5,7 @@
 // https://github.com/taiki-e/cargo-llvm-cov?tab=readme-ov-file#exclude-code-from-coverage
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
 
+pub mod iterator_wrapper;
 mod primitive_endpoint;
 
 /// An [`Endpoint`] is the left or right limit of a closed interval
@@ -102,6 +103,41 @@ pub trait ClosedRange: Copy + Ord + private::Sealed {
     #[doc(hidden)]
     fn get(self) -> Pair<Self::EndT>;
 }
+
+/// A [`NormalizedRangeIter`] yields a sorted sequence of
+/// non-overlapping, non-adjacent, non-empty closed ranges.
+///
+/// It's hard to check for this property at runtime, so this
+/// trait is sealed.
+pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRange> {
+    /// Determines whether this range iterator is equivalent to
+    /// (represents the same set of values as) another.
+    fn eqv(
+        mut self,
+        other: impl IntoNormalizedRangeIter<
+            IntoIter: Iterator<Item: ClosedRange<EndT = <Self::Item as ClosedRange>::EndT>>,
+        >,
+    ) -> bool {
+        let mut other = other.into_iter();
+        loop {
+            match (self.next(), other.next()) {
+                (Some(a), Some(b)) => {
+                    if a.get() != b.get() {
+                        return false;
+                    }
+                }
+                (None, None) => return true,
+                _ => return false,
+            }
+        }
+    }
+}
+
+/// A [`IntoNormalizedRangeIter`] is an [`IntoIterator`] that turns
+/// into an [`NormalizedRangeIter`].
+pub trait IntoNormalizedRangeIter: IntoIterator<IntoIter: NormalizedRangeIter> {}
+
+impl<T: IntoIterator<IntoIter: NormalizedRangeIter>> IntoNormalizedRangeIter for T {}
 
 impl<T: Endpoint> private::Sealed for (T, T) {}
 
