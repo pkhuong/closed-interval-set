@@ -5,6 +5,7 @@
 // https://github.com/taiki-e/cargo-llvm-cov?tab=readme-ov-file#exclude-code-from-coverage
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
 
+mod complement;
 pub mod iterator_wrapper;
 mod normalize;
 mod primitive_endpoint;
@@ -18,6 +19,7 @@ pub use range_vec::RangeVec;
 pub use normalize::is_normalized;
 pub use normalize::normalize_vec;
 
+pub use complement::complement_vec;
 pub use union::union_vec;
 
 /// An [`Endpoint`] is the left or right limit of a closed interval
@@ -142,6 +144,14 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
                 _ => return false,
             }
         }
+    }
+
+    /// Returns an iterator for the complement of this normalized range iterator.
+    ///
+    /// The result is also a [`NormalizedRangeIter`].
+    #[inline(always)]
+    fn complement(self) -> complement::ComplementIterator<Self> {
+        complement::ComplementIterator::new(self)
     }
 
     /// Collects the contents of a [`NormalizedRangeIter`] into a [`RangeVec`]

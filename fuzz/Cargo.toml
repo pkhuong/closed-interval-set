@@ -161,3 +161,77 @@ path = "fuzz_targets/normalize/i128.rs"
 test = false
 doc = false
 bench = false
+
+
+# complement
+# cargo fuzz list | grep complement_ | \
+#     parallel --color --tag -P 4 --line-buffer cargo fuzz run {} -- -max_total_time=7200
+[[bin]]
+name = "complement_u8"
+path = "fuzz_targets/complement/u8.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "complement_u16"
+path = "fuzz_targets/complement/u16.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "complement_u32"
+path = "fuzz_targets/complement/u32.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "complement_u64"
+path = "fuzz_targets/complement/u64.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "complement_u128"
+path = "fuzz_targets/complement/u128.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "complement_i8"
+path = "fuzz_targets/complement/i8.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "complement_i16"
+path = "fuzz_targets/complement/i16.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "complement_i32"
+path = "fuzz_targets/complement/i32.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "complement_i64"
+path = "fuzz_targets/complement/i64.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "complement_i128"
+path = "fuzz_targets/complement/i128.rs"
+test = false
+doc = false
+bench = false
