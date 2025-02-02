@@ -11,6 +11,7 @@ mod normalize;
 mod primitive_endpoint;
 mod range_case;
 mod range_vec;
+mod slice_sequence;
 mod union;
 
 pub use range_case::RangeCase;
