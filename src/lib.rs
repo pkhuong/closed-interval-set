@@ -7,6 +7,9 @@
 
 pub mod iterator_wrapper;
 mod primitive_endpoint;
+mod range_vec;
+
+pub use range_vec::RangeVec;
 
 /// An [`Endpoint`] is the left or right limit of a closed interval
 /// `[left, right]`.
@@ -130,6 +133,12 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
                 _ => return false,
             }
         }
+    }
+
+    /// Collects the contents of a [`NormalizedRangeIter`] into a [`RangeVec`]
+    fn collect_range_vec(self) -> RangeVec<<Self::Item as ClosedRange>::EndT> {
+        let inner: Vec<_> = self.map(|range| range.get()).collect();
+        unsafe { RangeVec::new_unchecked(inner) }
     }
 }
 

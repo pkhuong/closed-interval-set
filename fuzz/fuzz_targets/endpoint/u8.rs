@@ -1,6 +1,7 @@
 #![no_main]
 
 use closed_interval_set::Endpoint;
+use closed_interval_set::RangeVec;
 use libfuzzer_sys::fuzz_target;
 
 type T = u8;
@@ -39,8 +40,22 @@ fn two_endpoints(x: T, y: T) {
     }
 }
 
-fuzz_target!(|values: Vec<(T, T)>| {
-    for (x, y) in values {
+fuzz_target!(|values: (Vec<(T, T)>, Vec<(T, T)>)| {
+    let (first, second) = values;
+
+    {
+        let first = RangeVec::from_vec(first.clone());
+        let second = RangeVec::from_vec(second.clone());
+
+        let equal = first == second;
+        let eqv = first.eqv(&second);
+
+        assert_eq!(equal, eqv);
+        assert!(first.eqv(&first));
+        assert!(second.eqv(&second));
+    }
+
+    for (x, y) in first.into_iter().chain(second.into_iter()) {
         single_endpoint(x);
         single_endpoint(y);
         two_endpoints(x, y);
