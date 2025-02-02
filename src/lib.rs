@@ -10,12 +10,15 @@ mod normalize;
 mod primitive_endpoint;
 mod range_case;
 mod range_vec;
+mod union;
 
 pub use range_case::RangeCase;
 pub use range_vec::RangeVec;
 
 pub use normalize::is_normalized;
 pub use normalize::normalize_vec;
+
+pub use union::union_vec;
 
 /// An [`Endpoint`] is the left or right limit of a closed interval
 /// `[left, right]`.
