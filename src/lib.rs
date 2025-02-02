@@ -6,12 +6,16 @@
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
 
 pub mod iterator_wrapper;
+mod normalize;
 mod primitive_endpoint;
 mod range_case;
 mod range_vec;
 
 pub use range_case::RangeCase;
 pub use range_vec::RangeVec;
+
+pub use normalize::is_normalized;
+pub use normalize::normalize_vec;
 
 /// An [`Endpoint`] is the left or right limit of a closed interval
 /// `[left, right]`.
@@ -174,6 +178,22 @@ impl<T: Endpoint> ClosedRange for &(T, T) {
 
 /// The return type of `ClosedRange::get()`.
 type ClosedRangeVal<T> = Pair<<T as ClosedRange>::EndT>;
+
+#[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
+fn ranges_to_bits(ranges: &[(u8, u8)]) -> Vec<bool> {
+    let mut marks = vec![false; 256];
+
+    for (start, stop) in ranges.iter().copied() {
+        if start <= stop {
+            for i in start..=stop {
+                marks[i as usize] = true;
+            }
+        }
+    }
+
+    marks
+}
 
 #[cfg(test)]
 #[cfg_attr(coverage_nightly, coverage(off))]

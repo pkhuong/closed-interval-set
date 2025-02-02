@@ -35,7 +35,14 @@ impl<T: Endpoint> RangeVec<T> {
     /// The caller must check that `inner` is normalized.
     #[inline(always)]
     pub unsafe fn new_unchecked(inner: Vec<(T, T)>) -> Self {
+        debug_assert!(crate::is_normalized(&inner[..]));
         Self { inner }
+    }
+
+    /// Converts `inner` to a normalized [`RangeVec`] in place.
+    #[inline(always)]
+    pub fn from_vec(inner: Vec<(T, T)>) -> Self {
+        crate::normalize_vec(inner)
     }
 
     /// Returns a reference to the underlying ranges.

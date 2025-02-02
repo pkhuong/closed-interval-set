@@ -16,6 +16,9 @@ path = ".."
 [lints.clippy]
 type_complexity = "allow"  # the fuzzing macro forces tuples instead of multiple arguments
 
+# Endpoint
+# cargo fuzz list | grep endpoint_ | \
+#     parallel --color --tag -P 4 --line-buffer cargo fuzz run {} -- -max_total_time=7200
 [[bin]]
 name = "endpoint_u8"
 path = "fuzz_targets/endpoint/u8.rs"
@@ -82,6 +85,79 @@ bench = false
 [[bin]]
 name = "endpoint_i128"
 path = "fuzz_targets/endpoint/i128.rs"
+test = false
+doc = false
+bench = false
+
+# normalize
+# cargo fuzz list | grep normalize_ | \
+#     parallel --color --tag -P 4 --line-buffer cargo fuzz run {} -- -max_total_time=7200
+[[bin]]
+name = "normalize_u8"
+path = "fuzz_targets/normalize/u8.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "normalize_u16"
+path = "fuzz_targets/normalize/u16.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "normalize_u32"
+path = "fuzz_targets/normalize/u32.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "normalize_u64"
+path = "fuzz_targets/normalize/u64.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "normalize_u128"
+path = "fuzz_targets/normalize/u128.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "normalize_i8"
+path = "fuzz_targets/normalize/i8.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "normalize_i16"
+path = "fuzz_targets/normalize/i16.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "normalize_i32"
+path = "fuzz_targets/normalize/i32.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "normalize_i64"
+path = "fuzz_targets/normalize/i64.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "normalize_i128"
+path = "fuzz_targets/normalize/i128.rs"
 test = false
 doc = false
 bench = false
