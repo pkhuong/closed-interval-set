@@ -1,0 +1,87 @@
+[package]
+name = "closed-interval-set-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.closed-interval-set]
+path = ".."
+
+[lints.clippy]
+type_complexity = "allow"  # the fuzzing macro forces tuples instead of multiple arguments
+
+[[bin]]
+name = "endpoint_u8"
+path = "fuzz_targets/endpoint/u8.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "endpoint_u16"
+path = "fuzz_targets/endpoint/u16.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "endpoint_u32"
+path = "fuzz_targets/endpoint/u32.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "endpoint_u64"
+path = "fuzz_targets/endpoint/u64.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "endpoint_u128"
+path = "fuzz_targets/endpoint/u128.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "endpoint_i8"
+path = "fuzz_targets/endpoint/i8.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "endpoint_i16"
+path = "fuzz_targets/endpoint/i16.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "endpoint_i32"
+path = "fuzz_targets/endpoint/i32.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "endpoint_i64"
+path = "fuzz_targets/endpoint/i64.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "endpoint_i128"
+path = "fuzz_targets/endpoint/i128.rs"
+test = false
+doc = false
+bench = false
