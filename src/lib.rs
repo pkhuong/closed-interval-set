@@ -38,8 +38,9 @@ pub use union::union_vec;
 /// descending order.
 ///
 /// There is an implementation for all 10 primitive fixed-width
-/// integer types (signed/unsigned 8, 16, 32, 64, and 128 bits),
-/// and for [`isize`] and [`usize`].
+/// integer types (signed/unsigned 8, 16, 32, 64, and 128 bits), for
+/// [`isize`] and [`usize`], and for the IEEE floating point types
+/// [`f32`] and [`f64`].
 pub trait Endpoint: Copy {
     /// The minimum value for values of type [`Endpoint`]:
     ///

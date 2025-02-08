@@ -321,6 +321,73 @@ mod test {
         }
     }
 
+    // nans and such
+    #[test]
+    fn test_fp_limits() {
+        // NaN
+        assert!(!is_normalized([(f32::NAN, f32::NAN)]));
+        assert!(!is_normalized([(0.0, f32::NAN)]));
+        assert!(!is_normalized([(f64::NAN, 0.0)]));
+        assert!(!is_normalized([
+            (0.0, 1.0),
+            (f32::NAN, f32::NAN),
+            (2.0, 3.0)
+        ]));
+        assert!(!is_normalized([(0.0, 1.0), (f64::NAN, 10.0), (12.0, 13.0)]));
+        assert!(!is_normalized([(0.0, 1.0), (10.0, f64::NAN), (12.0, 13.0)]));
+        assert!(!is_normalized([(0.0, 1.0), (f64::NAN, 10.0)]));
+        assert!(!is_normalized([(0.0, 1.0), (10.0, f64::NAN)]));
+
+        // Also check NaN handling in `normalize`.
+        {
+            let norm = RangeVec::from_vec(vec![(f64::NAN, f64::NAN)]);
+            assert!(norm.is_empty());
+
+            let norm = RangeVec::from_vec(vec![(0.0, f64::NAN)]);
+            assert!(norm.is_empty());
+
+            let norm = RangeVec::from_vec(vec![(f64::NAN, 0.0)]);
+            assert!(norm.is_empty());
+        }
+
+        {
+            let norm = RangeVec::from_vec(vec![
+                (0.0, 1.0),
+                (f32::NAN, f32::NAN),
+                (2.0, 3.0),
+                (f32::NAN, 2.0),
+                (1.0, f32::NAN),
+            ]);
+            assert_eq!(norm.inner(), &[(0.0, 1.0), (2.0, 3.0)]);
+        }
+
+        // Signed zeros
+        assert!(!is_normalized([(0.0f64, -0.0f64)]));
+        assert!(is_normalized([(-0.0f64, 0.0f64)]));
+        assert!(is_normalized([(-0.0f64, -0.0f64)]));
+        assert!(is_normalized([(0.0f32, 0.0f32)]));
+
+        // Too close
+        assert!(!is_normalized([(-0.0f32, -0.0f32), (0.0f32, 0.0f32)]));
+        assert!(!is_normalized([(0.0, 0.0), (-0.0, 0.0)]));
+        assert!(!is_normalized([(0.0, 0.0), (-0.0, -0.0)]));
+
+        // Some infinities
+        assert!(!is_normalized([
+            (f32::NEG_INFINITY, -0.0f32), // too close
+            (0.0f32, f32::INFINITY)
+        ]));
+        assert!(is_normalized([
+            (f32::NEG_INFINITY, f32::NEG_INFINITY),
+            (0f32, f32::INFINITY)
+        ]));
+        // f64::MAX and f64::INFINITY are too close.
+        assert!(!is_normalized([
+            (f64::NEG_INFINITY, f64::MAX),
+            (f64::INFINITY, f64::INFINITY)
+        ]));
+    }
+
     proptest::proptest! {
         #[test]
         fn is_normalized_negative(x: (u8, u8), y: (u8, u8), ranges: Vec<(u8, u8)>) {
@@ -407,6 +474,49 @@ mod test {
 
             assert_eq!(&normalized, &RangeVec::from_vec(ranges));
             assert_eq!(&normalized, &RangeVec::from_vec(double_normalized.into_inner()));
+        }
+
+        #[test]
+        fn test_smoke_is_normalized_vec_f32(mut ranges: Vec<(f32, f32)>) {
+            let ltr = is_normalized(&ranges);
+            ranges.reverse();
+            let rtl = is_normalized(&ranges);
+
+            if ranges.is_empty() {
+                assert!(ltr);
+                assert!(rtl);
+            } else {
+                let first = ranges[0];
+                if ranges
+                    .iter()
+                    .all(|x| f32::cmp_range(*x, first) == std::cmp::Ordering::Equal)
+                {
+                    assert_eq!(ltr, rtl);
+                } else {
+                    // They can't both be correct
+                    assert!(!ltr || !rtl);
+                }
+            }
+        }
+
+        #[test]
+        fn test_smoke_normalize_vec_f64(ranges: Vec<(f64, f64)>) {
+            let normalized = normalize_vec(ranges.clone());
+
+            // Normalizing a RangeVec should no-op.
+            let clone = normalized.clone();
+            let clone_ptr = clone.as_ptr() as usize;
+            let double_normalized = normalize_vec(clone);
+            // This doesn't test as much you'd think because even full
+            // normalization is in-place.
+            assert_eq!(clone_ptr, double_normalized.as_ptr() as usize);
+            assert_eq!(&normalized, &double_normalized);
+
+            assert_eq!(&normalized, &RangeVec::from_vec(ranges));
+            assert_eq!(
+                &normalized,
+                &RangeVec::from_vec(double_normalized.into_inner())
+            );
         }
     }
 }

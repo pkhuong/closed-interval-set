@@ -317,5 +317,23 @@ mod test {
 
             assert_eq!(&ranges_to_bits(&ranges.iter().complement().collect_range_vec()), &marks);
         }
+
+        #[test]
+        fn test_self_inverse_f32(ranges: Vec<(f32, f32)>) {
+            let ranges = RangeVec::from_vec(ranges);
+            let complement = ranges.complement();
+            let double_complement = complement.into_complement();
+
+            assert_eq!(ranges, double_complement);
+        }
+
+        #[test]
+        fn test_self_inverse_f64(ranges: Vec<(f64, f64)>) {
+            let ranges = RangeVec::from_vec(ranges);
+            let complement = ranges.complement();
+            let double_complement = complement.into_complement();
+
+            assert_eq!(ranges, double_complement);
+        }
     }
 }

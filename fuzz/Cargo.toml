@@ -89,6 +89,20 @@ test = false
 doc = false
 bench = false
 
+[[bin]]
+name = "endpoint_f32"
+path = "fuzz_targets/endpoint/f32.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "endpoint_f64"
+path = "fuzz_targets/endpoint/f64.rs"
+test = false
+doc = false
+bench = false
+
 # normalize
 # cargo fuzz list | grep normalize_ | \
 #     parallel --color --tag -P 4 --line-buffer cargo fuzz run {} -- -max_total_time=7200
@@ -158,6 +172,20 @@ bench = false
 [[bin]]
 name = "normalize_i128"
 path = "fuzz_targets/normalize/i128.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "normalize_f32"
+path = "fuzz_targets/normalize/f32.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "normalize_f64"
+path = "fuzz_targets/normalize/f64.rs"
 test = false
 doc = false
 bench = false
@@ -236,6 +264,20 @@ test = false
 doc = false
 bench = false
 
+[[bin]]
+name = "complement_f32"
+path = "fuzz_targets/complement/f32.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "complement_f64"
+path = "fuzz_targets/complement/f64.rs"
+test = false
+doc = false
+bench = false
+
 
 # intersect
 # cargo fuzz list | grep intersect_ | \
@@ -310,6 +352,20 @@ test = false
 doc = false
 bench = false
 
+[[bin]]
+name = "intersect_f32"
+path = "fuzz_targets/intersect/f32.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "intersect_f64"
+path = "fuzz_targets/intersect/f64.rs"
+test = false
+doc = false
+bench = false
+
 
 # union
 # cargo fuzz list | grep union_ | \
@@ -380,6 +436,20 @@ bench = false
 [[bin]]
 name = "union_i128"
 path = "fuzz_targets/union/i128.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "union_f32"
+path = "fuzz_targets/union/f32.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "union_f64"
+path = "fuzz_targets/union/f64.rs"
 test = false
 doc = false
 bench = false
