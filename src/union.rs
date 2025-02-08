@@ -31,6 +31,9 @@ impl<T: Endpoint> RangeVec<T> {
     /// See [`union_vec`] for more general types.
     #[inline(always)]
     pub fn into_union(self, other: impl Into<RangeCase<T>>) -> Self {
+        #[cfg(feature = "internal_checks")]
+        use crate::NormalizedRangeIter;
+
         fn doit<T: Endpoint>(mut x: Vec<(T, T)>, mut y: Vec<(T, T)>) -> RangeVec<T> {
             if y.len() > x.len() {
                 std::mem::swap(&mut x, &mut y);
@@ -41,7 +44,28 @@ impl<T: Endpoint> RangeVec<T> {
             union_vec(x, y)
         }
 
-        doit(self.into_inner(), other.into().into_inner())
+        let other = other.into().into_inner();
+
+        #[cfg(feature = "internal_checks")]
+        let expected = (
+            self.iter()
+                .union(RangeVec::from_vec(other.clone()))
+                .collect_range_vec(),
+            RangeVec::from_vec(other.clone())
+                .iter()
+                .union(self.iter())
+                .collect_range_vec(),
+        );
+
+        let ret = doit(self.into_inner(), other);
+
+        #[cfg(feature = "internal_checks")]
+        {
+            assert!(expected.0.eqv(&ret));
+            assert!(expected.1.eqv(&ret));
+        }
+
+        ret
     }
 }
 
