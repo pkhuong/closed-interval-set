@@ -165,6 +165,14 @@ pub fn intersect_vec<'a, T: Endpoint>(
     mut xs: &'a RangeVec<T>,
     mut ys: &'a RangeVec<T>,
 ) -> RangeVec<T> {
+    #[cfg(feature = "internal_checks")]
+    let expected = (
+        xs.iter().intersect(ys.iter()).collect_range_vec(),
+        ys.iter().intersect(xs.iter()).collect_range_vec(),
+        xs.iter().intersect_vec(ys).collect_range_vec(),
+        ys.iter().intersect_vec(xs).collect_range_vec(),
+    );
+
     if xs.len() > ys.len() {
         std::mem::swap(&mut xs, &mut ys);
     }
@@ -179,6 +187,15 @@ pub fn intersect_vec<'a, T: Endpoint>(
     debug_assert!((!(xs.is_empty() | ys.is_empty())) | (size_hint == (0, Some(0))));
     debug_assert!(size_hint.0 <= ret.len());
     debug_assert!(ret.len() <= size_hint.1.unwrap());
+
+    #[cfg(feature = "internal_checks")]
+    {
+        assert!(&expected.0.eqv(&ret));
+        assert!(&expected.1.eqv(&ret));
+        assert!(&expected.2.eqv(&ret));
+        assert!(&expected.3.eqv(&ret));
+    }
+
     ret
 }
 
