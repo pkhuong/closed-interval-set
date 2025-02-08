@@ -10,6 +10,8 @@ use crate::RangeVec;
 /// raw slices because the standard slice interface is full of hidden
 /// panics; the [`Sequence`] trait is small enough to audit, and
 /// doesn't itself hide panics in its interface.
+///
+/// The underlying [`Sequence`] must come from a normalized `RangeVec`.
 struct IntersectorImpl<Seq: Sequence> {
     seq: Seq,
     search_cursor: Seq,
@@ -33,19 +35,22 @@ impl<Seq: Sequence> IntersectorImpl<Seq> {
     }
 
     fn pump(&mut self, needle: Pair<Seq::EndT>) -> Option<Pair<Seq::EndT>> {
+        // Safe to compare because `seq` and its cursors are normalized.
+        use std::cmp::Ordering;
+
         let (x_start, x_stop) = needle;
 
         while let Some(((y_start, y_stop), rest)) = self.intersect_cursor.uncons() {
             self.intersect_cursor = rest;
 
-            if y_start > x_stop {
+            if y_start.cmp_end(x_stop) == Ordering::Greater {
                 return None;
             }
 
-            let start = x_start.max(y_start);
-            let stop = x_stop.min(y_stop);
+            let start = x_start.top_end(y_start);
+            let stop = x_stop.bot_end(y_stop);
 
-            if start <= stop {
+            if start.cmp_end(stop) <= Ordering::Equal {
                 return Some((start, stop));
             }
         }

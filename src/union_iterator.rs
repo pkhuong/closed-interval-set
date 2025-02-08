@@ -42,6 +42,8 @@ where
     type Item = (T, T);
 
     fn next(&mut self) -> Option<(T, T)> {
+        use std::cmp::Ordering; // Safe because both iterators are normalized
+
         loop {
             let next;
 
@@ -49,7 +51,7 @@ where
                 self.left.peek().map(|x| x.get()),
                 self.right.peek().map(|x| x.get()),
             ) {
-                (Some(left), Some(right)) if left <= right => {
+                (Some(left), Some(right)) if T::cmp_range(left, right) <= Ordering::Equal => {
                     next = left;
                     self.left.next();
                 }
@@ -77,13 +79,13 @@ where
             // Try to join `acc <= next`.
             if let Some(min_start) = acc_stop.increase_toward(next_start) {
                 // They're disjoint, produce `acc`, buffer `next.
-                if next_start > min_start {
+                if next_start.cmp_end(min_start) > Ordering::Equal {
                     self.accumulator = Some(next);
                     return Some((acc_start, acc_stop));
                 }
             }
 
-            self.accumulator = Some((acc_start, acc_stop.max(next_stop)));
+            self.accumulator = Some((acc_start, acc_stop.top_end(next_stop)));
         }
     }
 

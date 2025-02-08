@@ -40,7 +40,7 @@ pub use union::union_vec;
 /// There is an implementation for all 10 primitive fixed-width
 /// integer types (signed/unsigned 8, 16, 32, 64, and 128 bits),
 /// and for [`isize`] and [`usize`].
-pub trait Endpoint: Copy + Ord {
+pub trait Endpoint: Copy {
     /// The minimum value for values of type [`Endpoint`]:
     ///
     /// \\[ \forall x : \mathtt{Self}, x \geq \mathtt{Self::min\\_value}() \\]
@@ -50,6 +50,17 @@ pub trait Endpoint: Copy + Ord {
     ///
     /// \\[ \forall x : \mathtt{Self}, x \leq \mathtt{Self::max\\_value}() \\]
     fn max_value() -> Self;
+
+    /// Returns whether `self` is comparable.
+    fn is_valid(self) -> bool;
+
+    /// Compares `self <=> other`.  Both `self` and `other` are
+    /// guaranteed to satisfy [`Endpoint::is_valid()`].
+    /// Implementations may return an arbitrary ordering if that's not
+    /// the case.
+    ///
+    /// See [`std::cmp::Ord`]
+    fn cmp_end(self, other: Self) -> std::cmp::Ordering;
 
     /// Returns the minimum [`Endpoint`] value strictly
     /// greater than `self`, or `None` if there is no
@@ -92,6 +103,30 @@ pub trait Endpoint: Copy + Ord {
     ///
     /// [`next_after()`]: `Self::next_after`
     fn increase_toward(self, other: Self) -> Option<Self>;
+
+    /// Compares two ranges of endpoints.
+    #[doc(hidden)]
+    #[inline(always)]
+    fn cmp_range(left: (Self, Self), right: (Self, Self)) -> std::cmp::Ordering {
+        match left.0.cmp_end(right.0) {
+            std::cmp::Ordering::Equal => left.1.cmp_end(right.1),
+            any => any,
+        }
+    }
+
+    /// Returns the max of two endpoints.
+    #[doc(hidden)]
+    #[inline(always)]
+    fn bot_end(self, other: Self) -> Self {
+        std::cmp::min_by(self, other, |x, y| Self::cmp_end(*x, *y))
+    }
+
+    /// Returns the min of two endpoints.
+    #[doc(hidden)]
+    #[inline(always)]
+    fn top_end(self, other: Self) -> Self {
+        std::cmp::max_by(self, other, |x, y| Self::cmp_end(*x, *y))
+    }
 }
 
 /// We represent closed ranges as pairs of [`Endpoint`]s.
@@ -111,7 +146,7 @@ mod private {
 /// types outside this crate.  External code *may* have to write down
 /// the trait's name, but most likely shouldn't try to actually invoke
 /// any method on that trait.
-pub trait ClosedRange: Copy + Ord + private::Sealed {
+pub trait ClosedRange: Copy + private::Sealed {
     /// The type of the endpoints for this range.
     #[doc(hidden)]
     type EndT: Endpoint;
@@ -136,11 +171,13 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
             IntoIter: Iterator<Item: ClosedRange<EndT = <Self::Item as ClosedRange>::EndT>>,
         >,
     ) -> bool {
+        use std::cmp::Ordering;
+
         let mut other = other.into_iter();
         loop {
             match (self.next(), other.next()) {
                 (Some(a), Some(b)) => {
-                    if a.get() != b.get() {
+                    if Endpoint::cmp_range(a.get(), b.get()) != Ordering::Equal {
                         return false;
                     }
                 }
@@ -356,6 +393,27 @@ mod test {
             }
         }
 
+        #[test]
+        fn test_top_bot(x: u8, y: u8) {
+            assert_eq!(x.bot_end(y), x.min(y));
+            assert_eq!(y.bot_end(x), x.min(y));
+
+            assert_eq!(x.top_end(y), x.max(y));
+            assert_eq!(y.top_end(x), x.max(y));
+        }
+
+        #[test]
+        fn test_cmp(x: u8, y: u8) {
+            assert_eq!(x.cmp_end(y), x.cmp(&y));
+            assert_eq!(y.cmp_end(x), y.cmp(&x));
+        }
+
+        #[test]
+        fn test_cmp_range(x: (u8, u8), y: (u8, u8)) {
+            assert_eq!(u8::cmp_range(x, y), x.cmp(&y));
+            assert_eq!(u8::cmp_range(y, x), y.cmp(&x));
+        }
+
         // Smoke test isize and usize: they're the same as one of the
         // regular integer types, so not worth fuzzing individually.
         // However, we still want some coverage.
@@ -400,6 +458,27 @@ mod test {
         }
 
         #[test]
+        fn test_top_bot_isize(x: isize, y: isize) {
+            assert_eq!(x.bot_end(y), x.min(y));
+            assert_eq!(y.bot_end(x), x.min(y));
+
+            assert_eq!(x.top_end(y), x.max(y));
+            assert_eq!(y.top_end(x), x.max(y));
+        }
+
+        #[test]
+        fn test_cmp_isize(x: isize, y: isize) {
+            assert_eq!(x.cmp_end(y), x.cmp(&y));
+            assert_eq!(y.cmp_end(x), y.cmp(&x));
+        }
+
+        #[test]
+        fn test_cmp_range_isize(x: (isize, isize), y: (isize, isize)) {
+            assert_eq!(isize::cmp_range(x, y), x.cmp(&y));
+            assert_eq!(isize::cmp_range(y, x), y.cmp(&x));
+        }
+
+        #[test]
         fn test_increase_usize(x: usize) {
             assert_eq!(<usize as Endpoint>::max_value(), usize::MAX);
 
@@ -437,6 +516,27 @@ mod test {
                 assert_eq!(x.increase_toward(y), Some(x + 1));
                 assert_eq!(y.decrease_toward(x), Some(y - 1));
             }
+        }
+
+        #[test]
+        fn test_top_bot_usize(x: usize, y: usize) {
+            assert_eq!(x.bot_end(y), x.min(y));
+            assert_eq!(y.bot_end(x), x.min(y));
+
+            assert_eq!(x.top_end(y), x.max(y));
+            assert_eq!(y.top_end(x), x.max(y));
+        }
+
+        #[test]
+        fn test_cmp_usize(x: usize, y: usize) {
+            assert_eq!(x.cmp_end(y), x.cmp(&y));
+            assert_eq!(y.cmp_end(x), y.cmp(&x));
+        }
+
+        #[test]
+        fn test_cmp_range_usize(x: (usize, usize), y: (usize, usize)) {
+            assert_eq!(usize::cmp_range(x, y), x.cmp(&y));
+            assert_eq!(usize::cmp_range(y, x), y.cmp(&x));
         }
     }
 }

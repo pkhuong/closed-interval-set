@@ -15,6 +15,16 @@ macro_rules! def_endpoint {
                 }
 
                 #[inline(always)]
+                fn is_valid(self) -> bool {
+                    true
+                }
+
+                #[inline(always)]
+                fn cmp_end(self, other: Self) -> std::cmp::Ordering {
+                    std::cmp::Ord::cmp(&self, &other)
+                }
+
+                #[inline(always)]
                 fn decrease_toward(self, other: $T) -> Option<$T> {
                     if other < self {
                         self.checked_sub(1)

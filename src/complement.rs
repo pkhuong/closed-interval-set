@@ -128,6 +128,9 @@ impl<Ranges> NormalizedRangeIter for ComplementIterator<Ranges> where
 
 #[inline(never)]
 fn complement_impl<T: Endpoint>(normalized_intervals: Vec<(T, T)>) -> RangeVec<T> {
+    // safe to compare ranges because they're normalized.
+    use std::cmp::Ordering;
+
     let mut intervals = normalized_intervals;
     let mut prefix_len = 0;
 
@@ -139,7 +142,7 @@ fn complement_impl<T: Endpoint>(normalized_intervals: Vec<(T, T)>) -> RangeVec<T
             let (start, stop) = intervals[i];
 
             // The input is normalized, so intervals are valid.
-            debug_assert!(start <= stop);
+            debug_assert!(start.cmp_end(stop) <= Ordering::Equal);
 
             let (next_cg, gap) = cg.next(intervals[i]);
             if let Some(gap) = gap {

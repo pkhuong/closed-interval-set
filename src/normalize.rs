@@ -15,6 +15,8 @@ pub fn is_normalized<T: Endpoint>(
 ) -> bool {
     #[inline(never)]
     fn doit<T: Endpoint>(mut iter: impl Iterator<Item: ClosedRange<EndT = T>>) -> bool {
+        use std::cmp::Ordering; // Safe because we always check validity, so bogus results are fine
+
         let mut ret;
         let mut prev_stop;
 
@@ -22,7 +24,8 @@ pub fn is_normalized<T: Endpoint>(
         match iter.next().map(|range| range.get()) {
             Some((start, stop)) => {
                 // Range must be valid.
-                ret = start <= stop;
+                ret = start.is_valid() & stop.is_valid();
+                ret &= start.cmp_end(stop) <= Ordering::Equal;
                 prev_stop = stop;
             }
             // Empty sequence is normalized
@@ -30,17 +33,14 @@ pub fn is_normalized<T: Endpoint>(
         }
 
         for (start, stop) in iter.map(|range| range.get()) {
+            ret &= start.is_valid() & stop.is_valid();
             // Each range must be valid
-            if start > stop {
-                ret = false;
-            }
+            ret &= start.cmp_end(stop) <= Ordering::Equal;
 
             if let Some(min_start) = prev_stop.increase_toward(start) {
                 // the next range must be strictly after min_start, with
                 // a gap between the two.
-                if min_start >= start {
-                    ret = false;
-                }
+                ret &= min_start.cmp_end(start) < Ordering::Equal;
             } else {
                 // increase_toward returns None iff prev_stop >= start, and that
                 // means the intervals aren't disjoint.
@@ -63,18 +63,38 @@ pub fn is_normalized<T: Endpoint>(
 /// the suffix of `intervals` are arbitrary (but were at some point in
 /// the original `intervals`).
 #[inline(always)]
-fn normalize_slice<T: Endpoint>(intervals: &mut [(T, T)]) -> usize {
-    if intervals.is_empty() {
-        return 0;
+fn normalize_slice<T: Endpoint>(mut intervals: &mut [(T, T)]) -> usize {
+    use std::cmp::Ordering; // Safe because we only use results after validity check
+
+    let first_is_valid = match intervals.first() {
+        Some(first) => first.0.is_valid() & first.1.is_valid(),
+        None => return 0, // Empty slice is always valid
+    };
+
+    let is_sorted = intervals.is_sorted_by(|x, y| {
+        x.0.is_valid()
+            & x.1.is_valid()
+            & y.0.is_valid()
+            & y.1.is_valid()
+            & (T::cmp_range(*x, *y) <= Ordering::Equal)
+    });
+
+    if !(first_is_valid & is_sorted) {
+        // Move all valid values to the front.
+        let mut valid_prefix_len = 0usize;
+        for idx in 0..intervals.len() {
+            let cur = intervals[idx];
+            intervals[valid_prefix_len] = cur;
+            valid_prefix_len += (cur.0.is_valid() & cur.1.is_valid()) as usize;
+        }
+
+        intervals = &mut intervals[0..valid_prefix_len];
+
+        // Safe to compare because everything is valid.
+        intervals.sort_by(|x, y| T::cmp_range(*x, *y));
     }
 
-    // XXX: currently, this `is_sorted` check should be redundant, but
-    // it also shouldn't hurt too much to be explicit if we do have to
-    // sort.
-    if !intervals.is_sorted() {
-        intervals.sort();
-    }
-
+    // Once we get here, `intervals` is all valid and sorted, it's safe to compare.
     // The destination is just before the end of the prefix.
     let mut prefix_len = 0usize;
     for idx in 0..intervals.len() {
@@ -82,7 +102,7 @@ fn normalize_slice<T: Endpoint>(intervals: &mut [(T, T)]) -> usize {
 
         let (cur_start, cur_stop) = intervals[idx];
         // Empty interval. skip
-        if cur_start > cur_stop {
+        if cur_start.cmp_end(cur_stop) > Ordering::Equal {
             continue;
         }
 
@@ -97,15 +117,19 @@ fn normalize_slice<T: Endpoint>(intervals: &mut [(T, T)]) -> usize {
 
         assert!(dst <= idx);
         let (acc_start, acc_stop) = intervals[prefix_len - 1];
-        debug_assert!(acc_start <= acc_stop);
-        debug_assert!(acc_start <= cur_start);
-        debug_assert!(cur_start <= cur_stop);
-        debug_assert!(acc_start <= cur_stop);
+        debug_assert!(acc_start.cmp_end(acc_stop) <= Ordering::Equal);
+        debug_assert!(acc_start.cmp_end(cur_start) <= Ordering::Equal);
+        debug_assert!(cur_start.cmp_end(cur_stop) <= Ordering::Equal);
+        debug_assert!(acc_start.cmp_end(cur_stop) <= Ordering::Equal);
 
-        if cur_start <= acc_stop.next_after().unwrap_or(T::max_value()) {
-            intervals[dst] = (acc_start, acc_stop.max(cur_stop));
+        let next_start = acc_stop.next_after().unwrap_or(T::max_value());
+        if cur_start.cmp_end(next_start) <= Ordering::Equal {
+            intervals[dst] = (acc_start, acc_stop.top_end(cur_stop));
         } else {
-            debug_assert!(!(acc_start..=acc_stop).contains(&cur_start));
+            debug_assert!(
+                !((acc_start.cmp_end(cur_start) <= Ordering::Equal)
+                    & (acc_stop.cmp_end(cur_start) >= Ordering::Equal))
+            );
             assert!(dst < idx);
             intervals[dst + 1] = (cur_start, cur_stop);
             prefix_len += 1

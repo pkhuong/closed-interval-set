@@ -8,6 +8,9 @@ use crate::Pair;
 ///
 /// However, we also assume the contents are sorted, and use this to
 /// skip ahead, with `skip_to`.
+///
+/// We assume the underlying sequence is always a sequence of
+/// normalized ranges.
 pub trait Sequence: Copy {
     /// The endpoint type for the ranges (pairs of endpoints)
     /// contained in the sequence.
@@ -83,21 +86,23 @@ impl<'a, T: 'a + Endpoint> Sequence for &'a [(T, T)] {
 
 #[allow(dead_code)]
 #[inline(always)]
-fn slice_skip_to_preconditions<T: Copy + Ord>(this: &[T], x: T, cursor: &[T]) {
+fn slice_skip_to_preconditions<T: Endpoint>(this: &[(T, T)], x: (T, T), cursor: &[(T, T)]) {
+    use std::cmp::Ordering; // Safe because `this` and `cursor` are normalized
+
     // `Sequence`s must be sorted
-    assert!(this.is_sorted());
-    assert!(cursor.is_sorted());
+    assert!(this.is_sorted_by(|x, y| T::cmp_range(*x, *y) <= Ordering::Equal));
+    assert!(cursor.is_sorted_by(|x, y| T::cmp_range(*x, *y) <= Ordering::Equal));
     // in fact, cursor is a suffix of this.
     assert!(this.len() >= cursor.len());
     assert!(std::ptr::eq(&this[this.len() - cursor.len()..], cursor));
 
     if let Some(first) = this.first().copied() {
         // There is some element of `this` less than x.
-        if first < x {
+        if T::cmp_range(first, x) < Ordering::Equal {
             let cursor_first = cursor
                 .first()
                 .expect("cursor must start at value less than x");
-            assert!(*cursor_first < x);
+            assert!(T::cmp_range(*cursor_first, x) < Ordering::Equal);
         } else {
             // x is too small, we're in the second behaviour,
             // and `cursor` must be equal to this.
@@ -112,18 +117,23 @@ fn slice_skip_to_preconditions<T: Copy + Ord>(this: &[T], x: T, cursor: &[T]) {
 
 #[allow(dead_code)]
 #[inline(always)]
-fn slice_skip_to_guarantees<T: Copy + Ord>(ret: &[T], this: &[T], x: T) {
+fn slice_skip_to_guarantees<T: Endpoint>(ret: &[(T, T)], this: &[(T, T)], x: (T, T)) {
+    use std::cmp::Ordering; // Safe because `ret` and `this` are normalized
+
     // The return value is a suffix of `this`.
     assert!(ret.len() <= this.len());
     assert!(std::ptr::eq(ret, &this[this.len() - ret.len()..]));
 
     match this.first().copied() {
         // If we initially had a first value less than x...
-        Some(first) if first < x => {
-            assert!(ret.first().copied().expect("should have initial value") < x);
+        Some(first) if T::cmp_range(first, x) < Ordering::Equal => {
+            assert!(
+                T::cmp_range(ret.first().copied().expect("should have initial value"), x)
+                    < Ordering::Equal
+            );
             // The next value, if any, should be greater than or equal to x.
             if let Some(next) = ret.get(1) {
-                assert!(*next >= x);
+                assert!(T::cmp_range(*next, x) >= Ordering::Equal);
             }
         }
         _ => {
@@ -134,13 +144,15 @@ fn slice_skip_to_guarantees<T: Copy + Ord>(ret: &[T], this: &[T], x: T) {
 }
 
 #[inline(always)]
-fn skip_to_linear_search<T: Copy + Ord>(
-    cursor: &[T],
-    needle: T,
+fn skip_to_linear_search<T: Endpoint>(
+    cursor: &[(T, T)],
+    needle: (T, T),
     linear_work_factor: usize,
-) -> Option<&[T]> {
+) -> Option<&[(T, T)]> {
+    use std::cmp::Ordering; // Safe because `cursor` is normalized
+
     for (idx, y) in cursor.iter().skip(1).enumerate().take(linear_work_factor) {
-        if *y >= needle {
+        if T::cmp_range(*y, needle) >= Ordering::Equal {
             return Some(&cursor[idx..]);
         }
     }
@@ -149,8 +161,10 @@ fn skip_to_linear_search<T: Copy + Ord>(
 }
 
 #[inline(always)]
-fn skip_to_binary_search<T: Copy + Ord>(haystack: &[T], needle: T) -> &[T] {
-    let idx = haystack.partition_point(|x| *x < needle);
+fn skip_to_binary_search<T: Endpoint>(haystack: &[(T, T)], needle: (T, T)) -> &[(T, T)] {
+    use std::cmp::Ordering; // Safe because `haystack` is normalized
+
+    let idx = haystack.partition_point(|x| T::cmp_range(*x, needle) < Ordering::Equal);
     &haystack[idx.saturating_sub(1)..]
 }
 
@@ -175,8 +189,11 @@ mod test {
         assert!(sequence[0] > 0);
         assert!(*sequence.last().unwrap() < 100);
 
-        let sequence: &[u8] = &sequence;
+        let sequence = sequence.into_iter().map(|x| (x, x)).collect::<Vec<_>>();
+
+        let sequence: &[(u8, u8)] = &sequence;
         for needle in 0..=255u8 {
+            let needle = (needle, needle);
             let hit = skip_to_binary_search(sequence, needle);
             slice_skip_to_guarantees(hit, sequence, needle);
 
