@@ -187,7 +187,14 @@ impl<T: Endpoint> RangeVec<T> {
     /// Complements this [`RangeVec`] in place.
     #[inline(always)]
     pub fn into_complement(self) -> RangeVec<T> {
-        complement_impl(self.into_inner())
+        #[cfg(feature = "internal_checks")]
+        let expected = self.complement();
+
+        let ret = complement_impl(self.into_inner());
+        #[cfg(feature = "internal_checks")]
+        assert!(&expected.eqv(&ret));
+
+        ret
     }
 }
 
