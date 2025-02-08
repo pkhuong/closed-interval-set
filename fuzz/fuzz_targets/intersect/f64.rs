@@ -74,8 +74,22 @@ fn check(x: Vec<(T, T)>, y: Vec<(T, T)>) {
     }
 
     {
+        // -x & -y
+        let left = x
+            .iter()
+            .complement()
+            .intersect(y.iter().complement())
+            .collect_range_vec();
+        // -(x | u)
+        let right = union_vec(x.clone(), &y).into_complement();
+        assert!(is_normalized(&left));
+        assert!(is_normalized(&right));
+        assert_eq!(left, right);
+    }
+
+    {
         // - (x & y)
-        let left = y.intersect(&x).complement();
+        let left = y.iter().intersect(&x).complement().collect_range_vec();
         // (-x | -y)
         let right = x.complement().union(y.complement());
 

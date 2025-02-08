@@ -147,6 +147,14 @@ pub(crate) unsafe fn intersect<Xs: NormalizedRangeIter>(
     IntersectionIterator::new(xs, ys)
 }
 
+impl<T: Endpoint> RangeVec<T> {
+    /// Constructs the intersection of this [`RangeVec`] and another
+    /// [`RangeVec`].
+    #[inline(always)]
+    pub fn intersect_vec<'a>(&'a self, other: &'a RangeVec<T>) -> Self {
+        intersect_vec(self, other)
+    }
+}
 /// Constructs the intersection of two normalized vectors of ranges.
 ///
 /// Since both arguments are guaranteed to be normalized, we can
@@ -172,13 +180,6 @@ pub fn intersect_vec<'a, T: Endpoint>(
     assert!(size_hint.0 <= ret.len());
     assert!(ret.len() <= size_hint.1.unwrap());
     ret
-}
-
-impl<T: Endpoint> RangeVec<T> {
-    /// Constructs the intersection of two normalized vectnrs of ranges.
-    pub fn intersect(&self, other: &RangeVec<T>) -> RangeVec<T> {
-        intersect_vec(self, other)
-    }
 }
 
 #[cfg(test)]
@@ -227,7 +228,7 @@ mod test {
         );
 
         assert_eq!(
-            intersect_vec(&xs, &ys).into_inner(),
+            xs.intersect_vec(&ys).into_inner(),
             vec![
                 (1u8, 1u8),
                 (3u8, 4u8),

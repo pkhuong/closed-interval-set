@@ -36,6 +36,17 @@ fn check(x: Vec<(T, T)>, y: Vec<(T, T)>) {
             .intersect_vec(&y)
             .collect_range_vec()
             .is_empty());
+
+        assert!(x
+            .iter()
+            .intersect(&empty)
+            .collect_range_vec()
+            .is_empty());
+        assert!(empty
+            .iter()
+            .intersect(&y)
+            .collect_range_vec()
+            .is_empty());
     }
 
     // Intersection with universe is the identity
@@ -45,6 +56,8 @@ fn check(x: Vec<(T, T)>, y: Vec<(T, T)>) {
         assert_eq!(&intersect_vec(&x, &universe), &x);
         assert_eq!(&x.iter().intersect_vec(&universe).collect_range_vec(), &x);
         assert_eq!(&universe.iter().intersect_vec(&y).collect_range_vec(), &y);
+        assert_eq!(&x.iter().intersect(&universe).collect_range_vec(), &x);
+        assert_eq!(&universe.iter().intersect(&y).collect_range_vec(), &y);
     }
 
     // Check commutativity
@@ -52,12 +65,18 @@ fn check(x: Vec<(T, T)>, y: Vec<(T, T)>) {
         let inter_1 = intersect_vec(&x, &y);
         let inter_2 = x.iter().intersect_vec(&y).collect_range_vec();
         let inter_3 = y.iter().intersect_vec(&x).collect_range_vec();
+        let inter_4 = x.iter().intersect(&y).collect_range_vec();
+        let inter_5 = y.iter().intersect(&x).collect_range_vec();
 
         assert!(is_normalized(&inter_1));
         assert!(is_normalized(&inter_2));
         assert!(is_normalized(&inter_3));
+        assert!(is_normalized(&inter_4));
+        assert!(is_normalized(&inter_5));
         assert_eq!(inter_1, inter_2);
         assert_eq!(inter_1, inter_3);
+        assert_eq!(inter_1, inter_4);
+        assert_eq!(inter_1, inter_5);
     }
 
     {
@@ -75,8 +94,33 @@ fn check(x: Vec<(T, T)>, y: Vec<(T, T)>) {
     }
 
     {
+        // -x & -y
+        let left = x
+            .iter()
+            .complement()
+            .intersect(y.iter().complement())
+            .collect_range_vec();
+        // -(x | u)
+        let right = x.iter().union(&y).complement().collect_range_vec();
+        assert!(is_normalized(&left));
+        assert!(is_normalized(&right));
+        assert_eq!(left, right);
+    }
+
+    {
         // - (x & y)
         let left = y.intersect(&x).complement();
+        // (-x | -y)
+        let right = x.complement().union(y.complement());
+
+        assert!(is_normalized(&left));
+        assert!(is_normalized(&right));
+        assert_eq!(left, right);
+    }
+
+    {
+        // - (x & y)
+        let left = y.iter().intersect(&x).complement().collect_range_vec();
         // (-x | -y)
         let right = x.complement().union(y.complement());
 
@@ -89,6 +133,7 @@ fn check(x: Vec<(T, T)>, y: Vec<(T, T)>) {
 fuzz_target!(|x_y: (Vec<(T, T)>, Vec<(T, T)>)| {
     let (x, y) = x_y;
     check(x.clone(), y.clone());
+
     let x = x
         .into_iter()
         .map(|(a, b)| (a.min(b), a.max(b)))

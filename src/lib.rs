@@ -7,6 +7,7 @@
 
 mod complement;
 mod intersection;
+mod intersection_iterator;
 pub mod iterator_wrapper;
 mod normalize;
 mod primitive_endpoint;
@@ -210,6 +211,29 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
     {
         // Unsafe because the interface assumes both arguments are normalized.
         unsafe { crate::intersection::intersect(self, other) }
+    }
+
+    /// Returns an iterator for the intersection of this normalized range iterator
+    /// and another iterator of normalized ranges.
+    ///
+    /// The result is also a [`NormalizedRangeIter`].
+    #[inline(always)]
+    fn intersect<Other>(
+        self,
+        other: Other,
+    ) -> intersection_iterator::LinearIntersectionIterator<
+        <Self::Item as ClosedRange>::EndT,
+        Self,
+        <Other as IntoIterator>::IntoIter,
+    >
+    where
+        Other: IntoNormalizedRangeIter<
+            IntoIter: NormalizedRangeIter<
+                Item: ClosedRange<EndT = <Self::Item as ClosedRange>::EndT>,
+            >,
+        >,
+    {
+        intersection_iterator::LinearIntersectionIterator::new(self, other.into_iter())
     }
 
     /// Returns an interator for the union of this normalized range
