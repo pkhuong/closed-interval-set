@@ -13,6 +13,10 @@ libfuzzer-sys = "0.4"
 [dependencies.closed-interval-set]
 path = ".."
 
+[features]
+default = ["internal_checks"]
+internal_checks = ["closed-interval-set/internal_checks"]
+
 [lints.clippy]
 type_complexity = "allow"  # the fuzzing macro forces tuples instead of multiple arguments
 

@@ -7,6 +7,11 @@ description = "Unions of closed intervals as containers of pairs"
 repository = "https://github.com/pkhuong/closed-interval-set"
 license = "MIT"
 
+[features]
+# enable self-check (can be slow, mostly useful to debug the library);
+# best used with `cfg(debug_assertions)`.
+internal_checks = []
+
 [dependencies]
 
 [dev-dependencies]

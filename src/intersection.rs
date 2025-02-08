@@ -176,9 +176,9 @@ pub fn intersect_vec<'a, T: Endpoint>(
     let ret = intersection.collect_range_vec();
 
     // If any input is empty -> we know the intersection is empty.
-    assert!((!(xs.is_empty() | ys.is_empty())) | (size_hint == (0, Some(0))));
-    assert!(size_hint.0 <= ret.len());
-    assert!(ret.len() <= size_hint.1.unwrap());
+    debug_assert!((!(xs.is_empty() | ys.is_empty())) | (size_hint == (0, Some(0))));
+    debug_assert!(size_hint.0 <= ret.len());
+    debug_assert!(ret.len() <= size_hint.1.unwrap());
     ret
 }
 

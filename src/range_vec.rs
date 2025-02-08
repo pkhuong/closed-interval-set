@@ -35,7 +35,8 @@ impl<T: Endpoint> RangeVec<T> {
     /// The caller must check that `inner` is normalized.
     #[inline(always)]
     pub unsafe fn new_unchecked(inner: Vec<(T, T)>) -> Self {
-        debug_assert!(crate::is_normalized(&inner[..]));
+        #[cfg(any(feature = "internal_checks", debug_assertions))]
+        assert!(crate::is_normalized(&inner[..]));
         Self { inner }
     }
 

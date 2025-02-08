@@ -72,12 +72,12 @@ impl<'a, T: 'a + Endpoint> Sequence for &'a [(T, T)] {
                 .unwrap_or_else(|| skip_to_binary_search(self, x))
         };
 
-        #[cfg(debug_assertions)]
+        #[cfg(feature = "internal_checks")]
         slice_skip_to_preconditions(self, x, cursor);
 
         let ret = doit();
 
-        #[cfg(debug_assertions)]
+        #[cfg(feature = "internal_checks")]
         slice_skip_to_guarantees(ret, self, x);
 
         ret
