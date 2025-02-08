@@ -25,18 +25,6 @@ pub fn union_vec<T: Endpoint>(
 }
 
 impl<T: Endpoint> RangeVec<T> {
-    /// Constructs the union of this [`RangeVec`] and any iterator of
-    /// ranges.
-    ///
-    /// See [`union_vec`] for more general types.
-    #[inline(always)]
-    pub fn union(&self, other: impl IntoIterator<Item: ClosedRange<EndT = T>>) -> Self {
-        let mut ranges = self.inner().clone();
-        ranges.extend(other.into_iter().map(|x| x.get()));
-
-        RangeVec::from_vec(ranges)
-    }
-
     /// Constructs the union of this [`RangeVec`] and either a
     /// [`RangeVec`] or a [`Vec`].
     ///
@@ -77,7 +65,9 @@ mod test {
         );
 
         assert_eq!(
-            crate::normalize_vec(src.to_vec()).union(&[]).into_inner(),
+            crate::normalize_vec(src.to_vec())
+                .union(crate::normalize_vec(vec![]))
+                .into_inner(),
             src.to_vec()
         );
 

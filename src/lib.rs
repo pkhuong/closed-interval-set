@@ -14,6 +14,7 @@ mod range_case;
 mod range_vec;
 mod slice_sequence;
 mod union;
+mod union_iterator;
 
 pub use range_case::RangeCase;
 pub use range_vec::RangeVec;
@@ -171,6 +172,29 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
     {
         // Unsafe because the interface assumes both arguments are normalized.
         unsafe { crate::intersection::intersect(self, other) }
+    }
+
+    /// Returns an interator for the union of this normalized range
+    /// iterator and another normalized range iterator.
+    ///
+    /// The result is also a [`NormalizedRangeIter`].
+    #[inline(always)]
+    fn union<Other>(
+        self,
+        other: Other,
+    ) -> union_iterator::UnionIterator<
+        <Self::Item as ClosedRange>::EndT,
+        Self,
+        <Other as IntoIterator>::IntoIter,
+    >
+    where
+        Other: IntoNormalizedRangeIter<
+            IntoIter: NormalizedRangeIter<
+                Item: ClosedRange<EndT = <Self::Item as ClosedRange>::EndT>,
+            >,
+        >,
+    {
+        union_iterator::UnionIterator::new(self, other.into_iter())
     }
 
     /// Collects the contents of a [`NormalizedRangeIter`] into a [`RangeVec`]
