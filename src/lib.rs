@@ -261,7 +261,18 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
 
     /// Collects the contents of a [`NormalizedRangeIter`] into a [`RangeVec`]
     fn collect_range_vec(self) -> RangeVec<<Self::Item as ClosedRange>::EndT> {
+        #[cfg(feature = "internal_checks")]
+        let hint = self.size_hint();
+
         let inner: Vec<_> = self.map(|range| range.get()).collect();
+
+        #[cfg(feature = "internal_checks")]
+        {
+            assert!(hint.0 <= inner.len());
+            assert!(inner.len() <= hint.1.unwrap_or(usize::MAX));
+            assert!(is_normalized(&inner));
+        }
+
         unsafe { RangeVec::new_unchecked(inner) }
     }
 }
