@@ -30,6 +30,9 @@ impl<T: Endpoint> RangeVec<T> {
     /// (non-empty) closed ranges, the ranges don't overlap and aren't
     /// even adjacent, and the ranges are sorted in ascending order.
     ///
+    /// This operation takes constant time in release mode, and linear
+    /// time when debug assertions or internal checks are enabled.
+    ///
     /// # Safety
     ///
     /// The caller must check that `inner` is normalized.
@@ -41,6 +44,9 @@ impl<T: Endpoint> RangeVec<T> {
     }
 
     /// Converts `inner` to a normalized [`RangeVec`] in place.
+    ///
+    /// This operation is in-place and takes \\(\mathcal{O}(n \log n)\\)
+    /// time.
     #[inline(always)]
     pub fn from_vec(inner: Vec<(T, T)>) -> Self {
         crate::normalize_vec(inner)
@@ -70,6 +76,9 @@ impl<T: Endpoint> RangeVec<T> {
 
     /// Determines whether these two [`RangeVec`]s represent the same
     /// ranges.
+    ///
+    /// This operation takes constant space and time linear in the
+    /// shortest of the two inputs.
     pub fn eqv(&self, other: &RangeVec<T>) -> bool {
         self.iter().eqv(other.iter())
     }

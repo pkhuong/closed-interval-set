@@ -9,6 +9,8 @@ use crate::RangeVec;
 ///  1. consists of valid intervals `(start, stop)` with `start <= stop`
 ///  2. intervals are sorted by the `start` endpoint
 ///  3. adjacent intervals are disjoint and separated by at least one `Endpoint` value
+///
+/// Checking this property takes time linear in the length of the input iterator.
 #[inline(always)]
 pub fn is_normalized<T: Endpoint>(
     intervals: impl IntoIterator<Item: ClosedRange<EndT = T>>,
@@ -143,11 +145,20 @@ fn normalize_slice<T: Endpoint>(mut intervals: &mut [(T, T)]) -> usize {
     prefix_len
 }
 
-/// Normalizes the vector of intervals and returns a fresh vector that
+/// Normalizes the vector of intervals and returns a vector that
 /// represents the same set of values, without redundancy.
 ///
 /// No-ops quickly when `intervals` is known to be normalized at
-/// compile-time.
+/// compile time.
+///
+/// This operation always operates in place (constant space) and takes
+/// constant time when `intervals` is known to be normalized at
+/// compile time.
+///
+/// Barring pre-normalised input, this operation takes linear time
+/// when the input is already normalised or otherwise sorted, and
+/// \\(\mathcal{O}(n \log n)\\) time in the input size (number of
+/// ranges) in the general case.
 #[inline(always)]
 pub fn normalize_vec<T: Endpoint>(intervals: impl Into<RangeCase<T>>) -> RangeVec<T> {
     #[inline(never)]

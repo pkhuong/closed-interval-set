@@ -150,6 +150,9 @@ pub(crate) unsafe fn intersect<Xs: NormalizedRangeIter>(
 impl<T: Endpoint> RangeVec<T> {
     /// Constructs the intersection of this [`RangeVec`] and another
     /// [`RangeVec`].
+    ///
+    /// This operation takes at most \\(\mathcal{O}(\min(m + n, m \log n))\\)
+    /// time, where \\(m\\) is the size of `self`, and \\(n\\) that of `other`.
     #[inline(always)]
     pub fn intersect_vec<'a>(&'a self, other: &'a RangeVec<T>) -> Self {
         intersect_vec(self, other)
@@ -160,6 +163,10 @@ impl<T: Endpoint> RangeVec<T> {
 /// Since both arguments are guaranteed to be normalized, we can
 /// iterate over the shorter one and binary search over the longer
 /// one, which is usually a good idea.
+///
+/// This operation takes at most \\(\mathcal{O}(\min{m + n, m \log n})\\)
+/// time, where \\(m\\) is the size of the shorter [`RangeVec`], and
+/// \\(n\\) that of the longer [`RangeVec`].
 #[inline(never)]
 pub fn intersect_vec<'a, T: Endpoint>(
     mut xs: &'a RangeVec<T>,

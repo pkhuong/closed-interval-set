@@ -171,7 +171,11 @@ fn complement_impl<T: Endpoint>(normalized_intervals: Vec<(T, T)>) -> RangeVec<T
     unsafe { RangeVec::new_unchecked(intervals) }
 }
 
-/// Returns the complement of a vector of of closed `intervals`.
+/// Returns the complement of a vector of closed `intervals`.
+///
+/// This operation is in-place and takes time linear in the input if
+/// it is already normalized, and \\(\mathcal{O}(n \log n)\\) time
+/// otherwise.
 #[inline(always)]
 pub fn complement_vec<T: Endpoint>(intervals: impl Into<RangeCase<T>>) -> RangeVec<T> {
     crate::normalize_vec(intervals).into_complement()
@@ -179,12 +183,17 @@ pub fn complement_vec<T: Endpoint>(intervals: impl Into<RangeCase<T>>) -> RangeV
 
 impl<T: Endpoint> RangeVec<T> {
     /// Constructs the complement of [`RangeVec`] in a fresh vector.
+    ///
+    /// This operation takes linear time and allocates the result at
+    /// most in linear space.
     #[inline(always)]
     pub fn complement(&self) -> RangeVec<T> {
         self.iter().complement().collect_range_vec()
     }
 
     /// Complements this [`RangeVec`] in place.
+    ///
+    /// This operation is in place and takes linear time.
     #[inline(always)]
     pub fn into_complement(self) -> RangeVec<T> {
         #[cfg(feature = "internal_checks")]

@@ -8,6 +8,10 @@ use crate::RangeVec;
 /// There's no particularly smart way to do this (except maybe with a
 /// sorted merge, but hopefully the default [`slice::sort`] handles
 /// sorted runs): concatenate everything and normalize in place.
+///
+/// This operation reuses the storage from `acc` and takes
+/// \\(\mathcal{O}(n \log n)\\) time, where \\(n\\) is the total
+/// number of ranges in the two inputs.
 #[inline]
 pub fn union_vec<T: Endpoint>(
     acc: impl Into<RangeCase<T>>,
@@ -27,6 +31,11 @@ pub fn union_vec<T: Endpoint>(
 impl<T: Endpoint> RangeVec<T> {
     /// Constructs the union of this [`RangeVec`] and either a
     /// [`RangeVec`] or a [`Vec`].
+    ///
+    /// This operation reuses the storage from `self` and takes
+    /// \\(\mathcal{O}(n \log n)\\) time, where \\(n\\) is the total
+    /// size of the two inputs. This is worse than the linear-time
+    /// [`RangeVec::union`], but the constant factors are pretty good.
     ///
     /// See [`union_vec`] for more general types.
     #[inline(always)]

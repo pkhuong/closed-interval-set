@@ -124,6 +124,10 @@ impl<T: Endpoint> RangeVec<T> {
     /// Constructs the union of this [`RangeVec`] and any iterator of
     /// ranges.
     ///
+    /// This operation takes time linear in the total input size.  While
+    /// asymptotically better than [`RangeVec::into_union`], the latter's
+    /// constant factors may be better than this method's.
+    ///
     /// See [`union_vec`] for more general types.
     ///
     /// [`union_vec`]: crate::union_vec

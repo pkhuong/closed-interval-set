@@ -1,6 +1,55 @@
-//! The `closed_interval_set` crate manipulates unions of closed
-//! intervals that are physically represented as containers of pairs
-//! of endpoints.
+//! The `closed_interval_set` crate manipulates disjoint unions of
+//! closed intervals that are represented as vectors ([`RangeVec`]) or
+//! iterators ([`NormalizedRangeIter`]) of pairs of endpoints.  These
+//! intervals are always closed (inclusive at both ends), so the
+//! crate can naturally represent both the empty set (no interval),
+//! and the universe (a closed interval from min to max).
+//!
+//! The crate is designed for usage patterns where sets are
+//! constructed ahead of time (perhaps by combining different sets
+//! together), then frozen (as vectors, internally) for read-only
+//! access.  That said, its iterator implementations of set
+//! [complementation](`NormalizedRangeIter::complement`),
+//! [union](`NormalizedRangeIter::union`), and
+//! [intersection](`NormalizedRangeIter::intersect`) are closed over
+//! the [`NormalizedRangeIter`] trait, so it's feasible to build up a
+//! complex expression (not so complex to need type erasure though)
+//! before materializing the result to a [`RangeVec`].
+//!
+//! Using this crate usually starts by constructing [`Vec`]s of
+//! closed ranges (pairs of [`Endpoint`]s), and passing that to
+//! [`RangeVec::from_vec`].  From that point, we have access to the
+//! set operations on [`RangeVec`] and [`NormalizedRangeIter`].
+//! The toplevel functions (e.g., [`intersect_vec`] and
+//! [`normalize_vec`]) may be helpful to avoid excessive chaining or
+//! in subtle situations, e.g., when the compiler knows whether the
+//! input is a [`RangeVec`] or a [`Vec`] but it's annoying to track
+//! that by hand.
+//!
+//! Complementation is tricky when one Handles only closed intervals.
+//! We assume [`Endpoint`] types can enumerate values in total order
+//! via [`Endpoint::decrease_toward`] and [`Endpoint::increase_toward`].
+//! That's nonsense for [densely ordered sets](https://en.wikipedia.org/wiki/Dense_order)
+//! like \\(\mathbb{Q}\\), but tends to work OK on computers: it's trivial
+//! to enumerate bounded integers, and there is such a total order for
+//! the finite set of floating point values.  This sorted enumeration
+//! of floating point values rarely makes sense mathematically, but is
+//! reasonable in some domains, e.g., static program analysis.
+//!
+//! All operations take at most linear space and \\(\mathcal{O}(n \log
+//! n)\\) time, where \\(n\\) is the total number of ranges in all the
+//! inputs, before any normalization (simplification).  Set operations
+//! on [`NormalizedRangeIter`] always use constant space, and many
+//! operations on [`RangeVec`] reuse storage.
+//!
+//! The container type ([`Vec`]) is currently hardcoded, for
+//! simplicity.  The [`Endpoint`] trait, however, is fully generic.
+//! This crate comes with an implementation of [`Endpoint`] for all
+//! primitive fixed-width integer types ([`i8`], [`i16`], [`i32`],
+//! [`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`] and [`u128`]),
+//! for [`isize`] and [`usize`], and for the standard floating point
+//! types [`f32`] and [`f64`].
+
 #![deny(missing_docs)]
 // https://github.com/taiki-e/cargo-llvm-cov?tab=readme-ov-file#exclude-code-from-coverage
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
@@ -167,6 +216,9 @@ pub trait ClosedRange: Copy + private::Sealed {
 pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRange> {
     /// Determines whether this range iterator is equivalent to
     /// (represents the same set of values as) another.
+    ///
+    /// This operation takes constant space and time linear in
+    /// the shorter length of the two input iterators.
     fn eqv(
         mut self,
         other: impl IntoNormalizedRangeIter<
@@ -191,6 +243,9 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
 
     /// Returns an iterator for the complement of this normalized range iterator.
     ///
+    /// Running the resulting iterator to exhaustion takes constant space and time
+    /// linear in the length of the input iterator.
+    ///
     /// The result is also a [`NormalizedRangeIter`].
     #[inline(always)]
     fn complement(self) -> complement::ComplementIterator<Self> {
@@ -199,6 +254,10 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
 
     /// Returns an iterator for the intersection of this normalized range iterator
     /// and another [`RangeVec`] of normalized ranges.
+    ///
+    /// Running the resulting iterator to exhaustion takes constant space and
+    /// \\(\mathcal{O}(\min(m + n, m \log n))\\) time, where \\(m\\) is the
+    /// size of `self`, and \\(n\\) that of `other`.
     ///
     /// The result is also a [`NormalizedRangeIter`].
     #[inline(always)]
@@ -215,6 +274,9 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
 
     /// Returns an iterator for the intersection of this normalized range iterator
     /// and another iterator of normalized ranges.
+    ///
+    /// Running the resulting iterator to exhaustion takes constant space and
+    /// time linear in the total length of the two input iterators.
     ///
     /// The result is also a [`NormalizedRangeIter`].
     #[inline(always)]
@@ -239,6 +301,9 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
     /// Returns an interator for the union of this normalized range
     /// iterator and another normalized range iterator.
     ///
+    /// Running the resulting iterator to exhaustion takes constant space and
+    /// time linear in the total length of the two input iterators.
+    ///
     /// The result is also a [`NormalizedRangeIter`].
     #[inline(always)]
     fn union<Other>(
@@ -259,7 +324,10 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
         union_iterator::UnionIterator::new(self, other.into_iter())
     }
 
-    /// Collects the contents of a [`NormalizedRangeIter`] into a [`RangeVec`]
+    /// Collects the contents of a [`NormalizedRangeIter`] into a [`RangeVec`].
+    ///
+    /// This takes time linear in the length of the input iterator (in addition
+    /// to the resources used by the iterator itself).
     fn collect_range_vec(self) -> RangeVec<<Self::Item as ClosedRange>::EndT> {
         #[cfg(feature = "internal_checks")]
         let hint = self.size_hint();

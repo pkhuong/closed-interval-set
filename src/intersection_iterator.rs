@@ -115,6 +115,8 @@ impl<T: Endpoint> RangeVec<T> {
     /// Constructs the intersection of this [`RangeVec`] and any iterator of
     /// ranges.
     ///
+    /// This operation takes linear time in the size of the two inputs.
+    ///
     /// See [`RangeVec::intersect_vec`] when the other argument is
     /// also a [`RangeVec`].
     #[inline(always)]

@@ -16,6 +16,8 @@ pub struct RangeCase<T: Endpoint> {
 
 impl<T: Endpoint> RangeCase<T> {
     /// Creates a [`RangeCase`] from a (not necessarily normalized) vector of ranges.
+    ///
+    /// This operation takes constant time.
     #[inline(always)]
     pub fn from_vec(inner: Vec<(T, T)>) -> Self {
         Self {
@@ -25,6 +27,8 @@ impl<T: Endpoint> RangeCase<T> {
     }
 
     /// Creates a [`RangeCase`] from a (normalized) [`RangeVec`]
+    ///
+    /// This operation takes constant time.
     #[inline(always)]
     pub fn from_range_vec(set: RangeVec<T>) -> Self {
         Self {
@@ -34,6 +38,8 @@ impl<T: Endpoint> RangeCase<T> {
     }
 
     /// Returns the underlying vector
+    ///
+    /// This operation takes constant time.
     #[inline(always)]
     pub fn into_inner(self) -> Vec<(T, T)> {
         self.inner
@@ -41,6 +47,8 @@ impl<T: Endpoint> RangeCase<T> {
 
     /// Returns a [`RangeVec`] if the underlying vector is known to be
     /// normalized, and a [`Vec`] of ranges otherwise.
+    ///
+    /// This operation takes constant time.
     #[inline(always)]
     pub fn unerase(self) -> Result<RangeVec<T>, Vec<(T, T)>> {
         if self.normalized {
