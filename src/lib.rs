@@ -48,8 +48,8 @@
 //! primitive fixed-width integer types ([`i8`], [`i16`], [`i32`],
 //! [`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`] and [`u128`]),
 //! for [`isize`] and [`usize`], and for the standard floating point
-//! types [`f32`] and [`f64`] (from -infinity to +infinity, with -0 and
-//! +0 as distinct values).
+//! types [`f32`] and [`f64`] (from \\(-\infty\\) to \\(+\infty\\),
+//! with -0 and +0 as distinct values).
 
 #![deny(missing_docs)]
 // https://github.com/taiki-e/cargo-llvm-cov?tab=readme-ov-file#exclude-code-from-coverage
