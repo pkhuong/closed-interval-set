@@ -1,6 +1,6 @@
-//! Branded wrapper to mark iterators that yield a normalized sequence
-//! of ranges, ranges that are known to contain sorted and disjoint
-//! non-empty ranges.
+//! Branded wrapper to mark iterators that yield normalized sequences
+//! of ranges, i.e., that are known to contain sorted and fully disjoint
+//! (not adjacent) non-empty ranges.
 use std::iter::DoubleEndedIterator;
 use std::iter::ExactSizeIterator;
 use std::iter::Iterator;
