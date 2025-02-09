@@ -37,15 +37,17 @@ pub fn is_normalized<T: Endpoint>(
             // Each range must be valid
             ret &= start.cmp_end(stop) <= Ordering::Equal;
 
-            if let Some(min_start) = prev_stop.increase_toward(start) {
-                // the next range must be strictly after min_start, with
-                // a gap between the two.
-                ret &= min_start.cmp_end(start) < Ordering::Equal;
-            } else {
-                // increase_toward returns None iff prev_stop >= start, and that
-                // means the intervals aren't disjoint.
-                ret = false;
-            }
+            // Find the next value immediately after `prev_stop`,
+            // or default to the max value if there is none.
+            let start_limit = prev_stop.next_after().unwrap_or(T::max_value());
+
+            // The next range must be strictly after start_limit, i.e.,
+            // with a gap between the two.  This also handles the case
+            // where `start_limit` saturated because `prev_stop` is
+            // already at the max value: the comparison is always
+            // false, exactly what we want (can't have an interval
+            // strictly after one that ends at the max value).
+            ret &= start_limit.cmp_end(start) < Ordering::Equal;
 
             prev_stop = stop;
         }
