@@ -1,6 +1,6 @@
 [package]
 name = "closed-interval-set"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Paul Khuong"]
 edition = "2021"  # Should be 2024 compatible.
 description = "Unions of closed intervals as containers of pairs"
