@@ -1,7 +1,7 @@
 Closed interval set: disjoint unions of closed intervals
 ========================================================
 
-[Real documentation on docs.rs](https://docs.rs/closed-interval-sets).
+[Real documentation on docs.rs](https://docs.rs/closed-interval-set).
 
 There's a plethora of crates that manipulate sets of values
 represented as sets of intervals.  This crate targets what appears to
