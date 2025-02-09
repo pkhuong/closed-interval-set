@@ -24,3 +24,17 @@ iterator implementations of set complementation, union, and
 intersection are closed over the `NormalizedRangeIter` trait, so it's
 feasible to build up a complex expression (not so complex to need type
 erasure though) before materializing the result to a `RangeVec`.
+
+Related crates
+--------------
+
+[normalize\_interval](https://crates.io/crates/normalize_interval) : same idea of normalizing
+integer ranges to closed intervals.
+
+Many crates can handle the more complex case where we wish to track
+overlapping ranges individually (e.g., [iset](https://crates.io/crates/iset),
+or [nested_intervals](https://crates.io/crates/nested_intervals)).
+
+The [range-set-blaze](https://crates.io/crates/range-set-blaze) is
+similar to this crate, and [intervallum](https://crates.io/crates/intervallum)
+even closer, but neither handles the full range of u128 or i128.
