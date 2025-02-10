@@ -212,6 +212,7 @@ impl<T: Endpoint> RangeVec<T> {
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod test {
     use super::*;
+    use smallvec::smallvec;
 
     #[test]
     fn test_complement_smoke() {
@@ -226,16 +227,16 @@ mod test {
 
         let empty: &[(u8, u8)] = &[];
         assert_eq!(
-            complement_vec(empty.to_vec()).into_inner(),
+            complement_vec(empty.to_vec()).into_vec(),
             vec![(0u8, 255u8)]
         );
         assert_eq!(
-            normalize_vec(empty.to_vec()).into_complement().into_inner(),
+            normalize_vec(empty.to_vec()).into_complement().into_vec(),
             vec![(0u8, 255u8)]
         );
 
         assert_eq!(
-            normalize_vec(empty.to_vec()).complement().into_inner(),
+            normalize_vec(empty.to_vec()).complement().into_vec(),
             vec![(0u8, 255u8)]
         );
 
@@ -253,55 +254,58 @@ mod test {
             assert!(max.expect("should have max") >= 2);
         }
 
+        let smallvec: smallvec::SmallVec<[_; crate::INLINE_SIZE]> =
+            smallvec![(1u8, 10u8), (11u8, 11u8)];
         assert_eq!(
-            complement_vec(vec![(1u8, 10u8), (11u8, 11u8)]).into_inner(),
+            complement_vec(smallvec).into_vec(),
             vec![(0u8, 0u8), (12u8, 255u8)]
         );
         assert_eq!(
             complement(&normalize_vec(vec![(1u8, 10u8), (11u8, 11u8)]))
                 .collect_range_vec()
-                .into_inner(),
+                .into_vec(),
             vec![(0u8, 0u8), (12u8, 255u8)]
         );
 
+        let largervec: smallvec::SmallVec<[_; crate::INLINE_SIZE + 1]> = smallvec![(1u8, 255u8)];
+        assert_eq!(complement_vec(largervec).into_vec(), vec![(0u8, 0u8)]);
+
+        let smallervec: smallvec::SmallVec<[_; crate::INLINE_SIZE.saturating_sub(1)]> =
+            smallvec![(1u8, 255u8)];
         assert_eq!(
-            complement_vec(vec![(1u8, 255u8)]).into_inner(),
-            vec![(0u8, 0u8)]
-        );
-        assert_eq!(
-            complement(&normalize_vec(vec![(1u8, 255u8)]))
+            complement(&normalize_vec(smallervec))
                 .collect_range_vec()
-                .into_inner(),
+                .into_vec(),
             vec![(0u8, 0u8)]
         );
 
         assert_eq!(
-            complement_vec(vec![(1u8, 254u8)]).into_inner(),
+            complement_vec(vec![(1u8, 254u8)]).into_vec(),
             vec![(0u8, 0u8), (255u8, 255u8)]
         );
         assert_eq!(
             complement(&normalize_vec(vec![(1u8, 254u8)]))
                 .collect_range_vec()
-                .into_inner(),
+                .into_vec(),
             vec![(0u8, 0u8), (255u8, 255u8)]
         );
         assert_eq!(
             complement(normalize_vec(vec![(1u8, 254u8)]))
                 .collect_range_vec()
-                .into_inner(),
+                .into_vec(),
             vec![(0u8, 0u8), (255u8, 255u8)]
         );
 
-        assert_eq!(complement_vec(vec![(0u8, 255u8)]).into_inner(), vec![]);
+        assert_eq!(complement_vec(vec![(0u8, 255u8)]).into_vec(), vec![]);
         assert_eq!(
             complement(normalize_vec(vec![(0u8, 255u8)]))
                 .collect_range_vec()
-                .into_inner(),
+                .into_vec(),
             vec![]
         );
 
         assert_eq!(
-            complement_vec(vec![(0u8, 254u8)]).into_inner(),
+            complement_vec(vec![(0u8, 254u8)]).into_vec(),
             vec![(255u8, 255u8)]
         );
         assert_eq!(
@@ -312,7 +316,7 @@ mod test {
         assert_eq!(
             complement(&normalize_vec(vec![(0u8, 254u8)]))
                 .collect_range_vec()
-                .into_inner(),
+                .into_vec(),
             vec![(255u8, 255u8)]
         );
     }

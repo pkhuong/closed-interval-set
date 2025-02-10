@@ -72,7 +72,7 @@ fn check(ranges: Vec<(T, T)>) {
     } else {
         assert!(!independent_is_normalized(&ranges));
         let normalized = RangeVec::from_vec(ranges.clone());
-        assert!(normalized.inner() != &ranges);
+        assert!(normalized.inner() != ranges);
         normalized
     };
 
@@ -103,5 +103,5 @@ fuzz_target!(|ranges: Vec<(T, T)>| {
     check(ranges.clone());
 
     // Run on normalized input;
-    check(normalize_vec(ranges).into_inner());
+    check(normalize_vec(ranges).into_vec());
 });

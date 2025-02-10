@@ -162,7 +162,7 @@ mod test {
                 .iter()
                 .union(crate::normalize_vec(src.to_vec()).into_iter())
                 .collect_range_vec()
-                .into_inner(),
+                .into_vec(),
             vec![(0u8, 15u8)]
         );
 
@@ -171,7 +171,7 @@ mod test {
                 .iter()
                 .union(crate::normalize_vec(vec![]))
                 .collect_range_vec()
-                .into_inner(),
+                .into_vec(),
             src.to_vec()
         );
     }

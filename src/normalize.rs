@@ -180,6 +180,7 @@ pub fn normalize_vec<T: Endpoint>(intervals: impl Into<RangeCase<T>>) -> RangeVe
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod test {
     use super::*;
+    use crate::Backing;
 
     #[test]
     fn test_smoke() {
@@ -214,13 +215,13 @@ mod test {
             normalize_vec(normalized_intervals)
         );
 
-        assert_eq!(normalize_vec(Vec::<(u8, u8)>::new()).into_inner(), vec![]);
+        assert_eq!(normalize_vec(Vec::<(u8, u8)>::new()).into_vec(), vec![]);
     }
 
     #[test]
     fn test_units() {
         for bits in 0..=u16::MAX {
-            let mut atomic_intervals = Vec::<(u8, u8)>::new();
+            let mut atomic_intervals = Backing::<u8>::new();
             for i in (0..16u8).rev() {
                 if (bits & (1 << i)) != 0 {
                     atomic_intervals.push((i, i))
@@ -255,8 +256,8 @@ mod test {
     #[test]
     fn test_merge_normalized() {
         for bits in 0..=u16::MAX {
-            let mut first = Vec::<(u8, u8)>::new();
-            let mut second = Vec::<(u8, u8)>::new();
+            let mut first = Backing::<u8>::new();
+            let mut second = Backing::<u8>::new();
             for i in 0..8u8 {
                 if bits & (1 << i) != 0 {
                     first.push((i, i))
@@ -480,14 +481,18 @@ mod test {
             let double_normalized = normalize_vec(clone);
             // This doesn't test as much you'd think because even full
             // normalization is in-place.
-            assert_eq!(clone_ptr, double_normalized.as_ptr() as usize);
+            if double_normalized.len() > crate::INLINE_SIZE {
+                assert_eq!(clone_ptr, double_normalized.as_ptr() as usize);
+            }
+
             assert_eq!(&normalized, &double_normalized);
 
             assert_eq!(&initial_marks, &ranges_to_bits(&normalized));
             assert_eq!(&initial_marks, &ranges_to_bits(&double_normalized));
 
             assert_eq!(&normalized, &RangeVec::from_vec(ranges));
-            assert_eq!(&normalized, &RangeVec::from_vec(double_normalized.into_inner()));
+            assert_eq!(&normalized, &RangeVec::from_smallvec(double_normalized.clone().into_inner()));
+            assert_eq!(&normalized, &RangeVec::from_vec(double_normalized.into_vec()));
         }
 
         #[test]
@@ -523,13 +528,15 @@ mod test {
             let double_normalized = normalize_vec(clone);
             // This doesn't test as much you'd think because even full
             // normalization is in-place.
-            assert_eq!(clone_ptr, double_normalized.as_ptr() as usize);
+            if double_normalized.len() > crate::INLINE_SIZE {
+                assert_eq!(clone_ptr, double_normalized.as_ptr() as usize);
+            }
             assert_eq!(&normalized, &double_normalized);
 
             assert_eq!(&normalized, &RangeVec::from_vec(ranges));
             assert_eq!(
                 &normalized,
-                &RangeVec::from_vec(double_normalized.into_inner())
+                &RangeVec::from_smallvec(double_normalized.into_inner())
             );
         }
     }

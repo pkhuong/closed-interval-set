@@ -241,7 +241,7 @@ mod test {
             .is_empty());
 
         assert_eq!(
-            xs.clone().intersect(&ys).into_inner(),
+            xs.clone().intersect(&ys).into_vec(),
             vec![
                 (1u8, 1u8),
                 (3u8, 4u8),
@@ -252,7 +252,7 @@ mod test {
         );
 
         assert_eq!(
-            xs.intersect_vec(&ys).into_inner(),
+            xs.intersect_vec(&ys).into_vec(),
             vec![
                 (1u8, 1u8),
                 (3u8, 4u8),
@@ -263,7 +263,7 @@ mod test {
         );
 
         assert_eq!(
-            intersect_vec(&ys, &xs).into_inner(),
+            intersect_vec(&ys, &xs).into_vec(),
             vec![
                 (1u8, 1u8),
                 (3u8, 4u8),
@@ -300,7 +300,7 @@ mod test {
                 &crate::normalize_vec(xs[..0].to_vec()),
                 &crate::normalize_vec(vec![])
             )
-            .into_inner(),
+            .into_vec(),
             vec![]
         );
 
@@ -310,7 +310,7 @@ mod test {
             assert_eq!(
                 unsafe { intersect(empty.iter(), &[]) }
                     .collect_range_vec()
-                    .into_inner(),
+                    .into_vec(),
                 vec![]
             );
         }
@@ -320,7 +320,7 @@ mod test {
                 &crate::normalize_vec(xs[1..2].to_vec()),
                 &crate::normalize_vec(vec![(0u8, 0u8)])
             )
-            .into_inner(),
+            .into_vec(),
             vec![]
         );
     }

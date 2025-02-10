@@ -19,11 +19,11 @@ of that trait for the 12 standard integer types, as well as for 32 and
 
 The crate is designed for usage patterns where sets are constructed
 ahead of time (perhaps by combining different sets together), then
-frozen (as vectors, internally) for read-only access.  However, its
-iterator implementations of set complementation, union, and
-intersection are closed over the `NormalizedRangeIter` trait, so it's
-feasible to build up a complex expression (not so complex to need type
-erasure though) before materializing the result to a `RangeVec`.
+frozen (as `SmallVec<[(T, T); 2]>`, internally) for read-only access.
+However, its iterator implementations of set complementation, union,
+and intersection are closed over the `NormalizedRangeIter` trait, so
+it's feasible to build up a complex expression (not so complex to need
+type erasure though) before materializing the result to a `RangeVec`.
 
 Related crates
 --------------

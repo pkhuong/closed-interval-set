@@ -2,6 +2,7 @@
 //! containers (vectors) and iterators of ranges.  A normalized
 //! sequence of ranges is known to contain sorted and disjoint
 //! non-empty ranges.
+use smallvec::SmallVec;
 use std::iter::DoubleEndedIterator;
 use std::iter::ExactSizeIterator;
 
@@ -10,9 +11,10 @@ use crate::Backing;
 use crate::Endpoint;
 use crate::NormalizedRangeIter;
 
-/// A [`RangeVec<T>`] is a normalized [`Vec`] of `(T, T)`
+/// A [`RangeVec<T>`] is a normalized [`SmallVec`] of `(T, T)`,
+/// where the inline capacity is hardcoded to 2 ranges.
 ///
-/// This branded wrapper around `Vec<(T, T)>` is the primary
+/// This branded wrapper around `SmallVec<[(T, T); 2]>` is the primary
 /// representation for ranges at rest in this [`crate`].
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
 #[repr(transparent)]
@@ -24,7 +26,9 @@ impl<T: Endpoint> RangeVec<T> {
     /// Returns an empty [`RangeVec`] (represents the empty set).
     #[inline(always)]
     pub fn new() -> Self {
-        Self { inner: Vec::new() }
+        Self {
+            inner: SmallVec::new(),
+        }
     }
 
     /// Blindly tags a container as normalized: it contains valid
@@ -53,16 +57,33 @@ impl<T: Endpoint> RangeVec<T> {
         crate::normalize_vec(inner)
     }
 
+    /// Converts `inner` to a normalized [`RangeVec`] in place.
+    ///
+    /// This operation is in-place and takes \\(\mathcal{O}(n \log n)\\)
+    /// time.
+    #[inline(always)]
+    pub fn from_smallvec<const N: usize>(inner: SmallVec<[(T, T); N]>) -> Self {
+        crate::normalize_vec(inner)
+    }
+
     /// Returns a reference to the underlying ranges.
     #[inline(always)]
     pub fn inner(&self) -> &[(T, T)] {
         &self.inner
     }
 
-    /// Extracts the underlying vector of ranges.
+    /// Extracts the underlying [`SmallVec`] of ranges.
+    ///
+    /// [`SmallVec`]: `smallvec::SmallVec`
     #[inline(always)]
     pub fn into_inner(self) -> Backing<T> {
         self.inner
+    }
+
+    /// Extracts the underlying vector of ranges.
+    #[inline(always)]
+    pub fn into_vec(self) -> Vec<(T, T)> {
+        self.inner.into_vec()
     }
 
     /// Returns an iterator for the underlying normalized ranges.
@@ -126,13 +147,15 @@ impl<T: Endpoint> std::ops::Deref for RangeVec<T> {
 #[cfg_attr(coverage_nightly, coverage(off))]
 #[test]
 fn test_smoke() {
+    use smallvec::smallvec;
+
     assert_eq!(RangeVec::<u8>::new(), Default::default());
     assert_eq!(RangeVec::<u8>::new(), unsafe {
-        RangeVec::new_unchecked(vec![])
+        RangeVec::new_unchecked(smallvec![])
     });
     assert!(RangeVec::<u8>::new().is_empty());
 
-    let ranges = unsafe { RangeVec::new_unchecked(vec![(2u8, 4u8), (10u8, 20u8)]) };
+    let ranges = unsafe { RangeVec::new_unchecked(smallvec![(2u8, 4u8), (10u8, 20u8)]) };
 
     assert_eq!(ranges[0], (2u8, 4u8));
 
@@ -140,16 +163,17 @@ fn test_smoke() {
 
     assert!(ranges.eqv(&ranges.iter().collect_range_vec()));
     assert!(!ranges.eqv(&Default::default()));
-    assert!(!ranges.eqv(&unsafe { RangeVec::new_unchecked(vec![(2u8, 4u8), (11u8, 20u8)]) }));
-    assert!(!ranges
-        .eqv(&unsafe { RangeVec::new_unchecked(vec![(2u8, 4u8), (10u8, 20u8), (30u8, 30u8)]) }));
-    assert!(!ranges.eqv(&unsafe { RangeVec::new_unchecked(vec![(2u8, 4u8)]) }));
+    assert!(!ranges.eqv(&unsafe { RangeVec::new_unchecked(smallvec![(2u8, 4u8), (11u8, 20u8)]) }));
+    assert!(!ranges.eqv(&unsafe {
+        RangeVec::new_unchecked(smallvec![(2u8, 4u8), (10u8, 20u8), (30u8, 30u8)])
+    }));
+    assert!(!ranges.eqv(&unsafe { RangeVec::new_unchecked(smallvec![(2u8, 4u8)]) }));
 
     assert_eq!(ranges.inner(), &ranges.iter().collect::<Vec<_>>());
 
     assert_eq!(ranges.inner(), &(&ranges).into_iter().collect::<Vec<_>>());
     assert_eq!(
-        ranges.clone().into_inner(),
+        ranges.clone().into_vec(),
         ranges.into_iter().collect::<Vec<_>>()
     );
 }

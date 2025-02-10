@@ -16,15 +16,15 @@
 //! complex expression (not so complex to need type erasure though)
 //! before materializing the result to a [`RangeVec`].
 //!
-//! Using this crate usually starts by constructing [`Vec`]s of
-//! closed ranges (pairs of [`Endpoint`]s), and passing that to
+//! Using this crate usually starts by constructing [`Vec`]s of closed
+//! ranges (pairs of [`Endpoint`]s), and passing that to
 //! [`RangeVec::from_vec`].  From that point, we have access to the
-//! set operations on [`RangeVec`] and [`NormalizedRangeIter`].
-//! The toplevel functions (e.g., [`intersect_vec`] and
-//! [`normalize_vec`]) may be helpful to avoid excessive chaining or
-//! in subtle situations, e.g., when the compiler knows whether the
-//! input is a [`RangeVec`] or a [`Vec`] but it's annoying to track
-//! that by hand.
+//! set operations on [`RangeVec`] and [`NormalizedRangeIter`].  The
+//! toplevel functions (e.g., [`intersect_vec`] and [`normalize_vec`])
+//! may be helpful to avoid excessive chaining or in subtle
+//! situations, e.g., when the compiler knows whether the input is a
+//! [`RangeVec`] or a [`Vec`] (or [`SmallVec`]) but it's annoying to
+//! track by hand.
 //!
 //! Complementation is tricky when one Handles only closed intervals.
 //! We assume [`Endpoint`] types can enumerate values in total order
@@ -42,18 +42,21 @@
 //! on [`NormalizedRangeIter`] always use constant space, and many
 //! operations on [`RangeVec`] reuse storage.
 //!
-//! The container type ([`Vec`]) is currently hardcoded, for
-//! simplicity.  The [`Endpoint`] trait, however, is fully generic.
-//! This crate comes with an implementation of [`Endpoint`] for all
-//! primitive fixed-width integer types ([`i8`], [`i16`], [`i32`],
-//! [`i64`], [`i128`], [`u8`], [`u16`], [`u32`], [`u64`] and [`u128`]),
-//! for [`isize`] and [`usize`], and for the standard floating point
-//! types [`f32`] and [`f64`] (from \\(-\infty\\) to \\(+\infty\\),
-//! with -0 and +0 as distinct values).
+//! The container type ([`SmallVec`] with 2 inline ranges) is
+//! currently hardcoded, for simplicity.  The [`Endpoint`] trait,
+//! however, is fully generic.  This crate comes with an
+//! implementation of [`Endpoint`] for all primitive fixed-width
+//! integer types ([`i8`], [`i16`], [`i32`], [`i64`], [`i128`],
+//! [`u8`], [`u16`], [`u32`], [`u64`] and [`u128`]), for [`isize`] and
+//! [`usize`], and for the standard floating point types [`f32`] and
+//! [`f64`] (from \\(-\infty\\) to \\(+\infty\\), with -0 and +0 as
+//! distinct values).
 
 #![deny(missing_docs)]
 // https://github.com/taiki-e/cargo-llvm-cov?tab=readme-ov-file#exclude-code-from-coverage
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
+
+use smallvec::SmallVec;
 
 mod complement;
 mod intersection;
@@ -77,8 +80,15 @@ pub use complement::complement_vec;
 pub use intersection::intersect_vec;
 pub use union::union_vec;
 
+/// Inline storage (in ranges) reserved in a [`RangeVec`].
+pub const INLINE_SIZE: usize = if cfg!(feature = "inline_storage") {
+    2
+} else {
+    0
+};
+
 /// Our internal storage type for [`RangeVec`].
-type Backing<T> = Vec<(T, T)>;
+type Backing<T> = SmallVec<[(T, T); INLINE_SIZE]>;
 
 /// An [`Endpoint`] is the left or right limit of a closed interval
 /// `[left, right]`.
@@ -336,7 +346,7 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
         #[cfg(feature = "internal_checks")]
         let hint = self.size_hint();
 
-        let inner: Vec<_> = self.map(|range| range.get()).collect();
+        let inner: SmallVec<[_; INLINE_SIZE]> = self.map(|range| range.get()).collect();
 
         #[cfg(feature = "internal_checks")]
         {

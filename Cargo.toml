@@ -9,11 +9,15 @@ keywords = ["data-structures", "interval", "interval-set", "range", "set"]
 license = "MIT"
 
 [features]
+default = ["inline_storage"]
 # enable self-check (can be slow, mostly useful to debug the library);
 # best used with `cfg(debug_assertions)`.
 internal_checks = []
+# Reserve some inline space in the `SmallVec` that backs `RangeVec`s.
+inline_storage = []
 
 [dependencies]
+smallvec = { version = "^1.13", features = [ "union", "const_generics" ] }
 
 [dev-dependencies]
 proptest = "1"

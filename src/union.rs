@@ -59,9 +59,9 @@ impl<T: Endpoint> RangeVec<T> {
         #[cfg(feature = "internal_checks")]
         let expected = (
             self.iter()
-                .union(RangeVec::from_vec(other.clone()))
+                .union(RangeVec::from_smallvec(other.clone()))
                 .collect_range_vec(),
-            RangeVec::from_vec(other.clone())
+            RangeVec::from_smallvec(other.clone())
                 .iter()
                 .union(self.iter())
                 .collect_range_vec(),
@@ -94,14 +94,14 @@ mod test {
         assert_eq!(
             crate::normalize_vec(acc.clone())
                 .into_union(src.to_vec())
-                .into_inner(),
+                .into_vec(),
             vec![(0u8, 15u8)]
         );
 
         assert_eq!(
             crate::normalize_vec(src.to_vec())
                 .union(crate::normalize_vec(vec![]))
-                .into_inner(),
+                .into_vec(),
             src.to_vec()
         );
 
@@ -110,10 +110,10 @@ mod test {
         assert_eq!(result.inner(), &vec![(0u8, 15u8)]);
         assert_eq!(result.iter().collect::<Vec<_>>(), vec![(0u8, 15u8)]);
         assert_eq!(
-            result.iter().collect_range_vec().into_inner(),
+            result.iter().collect_range_vec().into_vec(),
             vec![(0u8, 15u8)]
         );
-        assert_eq!(result.into_inner(), vec![(0u8, 15u8)]);
+        assert_eq!(result.into_vec(), vec![(0u8, 15u8)]);
     }
 
     proptest::proptest! {

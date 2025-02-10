@@ -1,6 +1,8 @@
 //! Sometimes we don't care about whether data comes in normalized or
 //! as arbitrary ranges.  This module defines traits and types to help
 //! reduce the burden on callers in such cases.
+use smallvec::SmallVec;
+
 use crate::Backing;
 use crate::Endpoint;
 use crate::RangeVec;
@@ -21,6 +23,28 @@ impl<T: Endpoint> RangeCase<T> {
     /// This operation takes constant time.
     #[inline(always)]
     pub fn from_vec(inner: Vec<(T, T)>) -> Self {
+        Self {
+            inner: inner.into(),
+            normalized: false,
+        }
+    }
+
+    /// Creates a [`RangeCase`] from a (not necessarily normalized) smallvec of ranges.
+    ///
+    /// This operation takes constant time.
+    #[inline(always)]
+    pub fn from_smallvec<const N: usize>(inner: SmallVec<[(T, T); N]>) -> Self {
+        // `INLINE_SIZE == 0` unless inline storage is enabled.
+        #[cfg_attr(
+            not(feature = "inline_storage"),
+            allow(clippy::absurd_extreme_comparisons)
+        )]
+        let inner: Backing<T> = if inner.len() <= crate::INLINE_SIZE {
+            inner.into_iter().collect()
+        } else {
+            inner.into_vec().into()
+        };
+
         Self {
             inner,
             normalized: false,
@@ -74,16 +98,34 @@ impl<T: Endpoint> From<Vec<(T, T)>> for RangeCase<T> {
     }
 }
 
+impl<T: Endpoint, const N: usize> From<SmallVec<[(T, T); N]>> for RangeCase<T> {
+    #[inline(always)]
+    fn from(item: SmallVec<[(T, T); N]>) -> RangeCase<T> {
+        RangeCase::from_smallvec(item)
+    }
+}
+
 #[cfg_attr(coverage_nightly, coverage(off))]
 #[test]
 fn test_smoke() {
-    let x: RangeCase<_> = vec![(1u8, 2u8)].into();
-    assert_eq!(x.into_inner(), vec![(1u8, 2u8)]);
+    use smallvec::smallvec;
 
     let x: RangeCase<_> = vec![(1u8, 2u8)].into();
-    assert_eq!(x.unerase().unwrap_err(), vec![(1u8, 2u8)]);
+    assert_eq!(x.into_inner().into_vec(), vec![(1u8, 2u8)]);
 
-    let vec = unsafe { RangeVec::new_unchecked(vec![(1u8, 2u8)]) };
+    let smallvec: Backing<u8> = smallvec![(1u8, 2u8)];
+    let x: RangeCase<_> = smallvec.into();
+    assert_eq!(x.unerase().unwrap_err().into_vec(), vec![(1u8, 2u8)]);
+
+    let smallervec: SmallVec<[(u8, u8); 0]> = smallvec![(1u8, 2u8)];
+    let x: RangeCase<_> = smallervec.into();
+    assert_eq!(x.unerase().unwrap_err().into_vec(), vec![(1u8, 2u8)]);
+
+    let largervec: SmallVec<[(u8, u8); crate::INLINE_SIZE + 1]> = smallvec![(1u8, 2u8)];
+    let x: RangeCase<_> = largervec.into();
+    assert_eq!(x.unerase().unwrap_err().into_vec(), vec![(1u8, 2u8)]);
+
+    let vec = unsafe { RangeVec::new_unchecked(smallvec![(1u8, 2u8)]) };
     let x: RangeCase<_> = vec.clone().into();
     assert_eq!(x.unerase().unwrap(), vec);
 }
