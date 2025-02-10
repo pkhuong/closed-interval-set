@@ -36,7 +36,7 @@ impl<Seq: Sequence> IntersectorImpl<Seq> {
 
     fn pump(&mut self, needle: Pair<Seq::EndT>) -> Option<Pair<Seq::EndT>> {
         // Safe to compare because `seq` and its cursors are normalized.
-        use std::cmp::Ordering;
+        use core::cmp::Ordering;
 
         let (x_start, x_stop) = needle;
 
@@ -164,7 +164,7 @@ impl<T: Endpoint> RangeVec<T> {
 /// iterate over the shorter one and binary search over the longer
 /// one, which is usually a good idea.
 ///
-/// This operation takes at most \\(\mathcal{O}(\min{m + n, m \log n})\\)
+/// This operation takes at most \\(\mathcal{O}(\min(m + n, m \log n))\\)
 /// time, where \\(m\\) is the size of the shorter [`RangeVec`], and
 /// \\(n\\) that of the longer [`RangeVec`].
 #[inline(never)]
@@ -181,7 +181,7 @@ pub fn intersect_vec<'a, T: Endpoint>(
     );
 
     if xs.len() > ys.len() {
-        std::mem::swap(&mut xs, &mut ys);
+        core::mem::swap(&mut xs, &mut ys);
     }
 
     debug_assert!(xs.len() <= ys.len());
@@ -210,6 +210,8 @@ pub fn intersect_vec<'a, T: Endpoint>(
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod test {
     use super::*;
+    use alloc::vec;
+    use alloc::vec::Vec;
 
     #[test]
     fn test_smoke() {

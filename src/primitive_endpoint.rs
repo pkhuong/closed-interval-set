@@ -20,8 +20,8 @@ macro_rules! def_endpoint {
                 }
 
                 #[inline(always)]
-                fn cmp_end(self, other: Self) -> std::cmp::Ordering {
-                    std::cmp::Ord::cmp(&self, &other)
+                fn cmp_end(self, other: Self) -> core::cmp::Ordering {
+                    core::cmp::Ord::cmp(&self, &other)
                 }
 
                 #[inline(always)]
@@ -107,7 +107,7 @@ macro_rules! def_float_endpoint {
                 }
 
                 #[inline(always)]
-                fn cmp_end(self, other: Self) -> std::cmp::Ordering {
+                fn cmp_end(self, other: Self) -> core::cmp::Ordering {
                     $to_int(self).cmp(&$to_int(other))
                 }
 
@@ -149,7 +149,7 @@ proptest::proptest! {
         assert_eq!(x.to_bits(), i32_to_f32(f32_to_i32(x)).to_bits());
         assert_eq!(y.to_bits(), i32_to_f32(f32_to_i32(y)).to_bits());
 
-        if x.partial_cmp(&0.0) == Some(std::cmp::Ordering::Equal) && y.partial_cmp(&0.0) == Some(std::cmp::Ordering::Equal)  {
+        if x.partial_cmp(&0.0) == Some(core::cmp::Ordering::Equal) && y.partial_cmp(&0.0) == Some(core::cmp::Ordering::Equal)  {
             assert_eq!(x.signum().partial_cmp(&y.signum()).unwrap(), x.cmp_end(y));
         } else if let Some(ord) = x.partial_cmp(&y) {
             assert_eq!(ord, x.cmp_end(y));
@@ -163,7 +163,7 @@ proptest::proptest! {
         assert_eq!(x.to_bits(), i64_to_f64(f64_to_i64(x)).to_bits());
         assert_eq!(y.to_bits(), i64_to_f64(f64_to_i64(y)).to_bits());
 
-        if x.partial_cmp(&0.0) == Some(std::cmp::Ordering::Equal) && y.partial_cmp(&0.0) == Some(std::cmp::Ordering::Equal)  {
+        if x.partial_cmp(&0.0) == Some(core::cmp::Ordering::Equal) && y.partial_cmp(&0.0) == Some(core::cmp::Ordering::Equal)  {
             assert_eq!(x.signum().partial_cmp(&y.signum()).unwrap(), x.cmp_end(y));
         } else if let Some(ord) = x.partial_cmp(&y) {
             assert_eq!(ord, x.cmp_end(y));

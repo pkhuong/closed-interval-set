@@ -5,7 +5,7 @@ use crate::IntoNormalizedRangeIter;
 use crate::NormalizedRangeIter;
 use crate::RangeVec;
 
-use std::iter::Peekable;
+use core::iter::Peekable;
 
 pub struct UnionIterator<T, X, Y>
 where
@@ -42,7 +42,7 @@ where
     type Item = (T, T);
 
     fn next(&mut self) -> Option<(T, T)> {
-        use std::cmp::Ordering; // Safe because both iterators are normalized
+        use core::cmp::Ordering; // Safe because both iterators are normalized
 
         loop {
             let next;
@@ -149,6 +149,8 @@ impl<T: Endpoint> RangeVec<T> {
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod test {
     use super::*;
+    use alloc::vec;
+    use alloc::vec::Vec;
 
     #[test]
     fn test_union_iterator_smoke() {

@@ -17,7 +17,7 @@
 //! before materializing the result to a [`RangeVec`].
 //!
 //! Using this crate usually starts by constructing [`Vec`]s of closed
-//! ranges (pairs of [`Endpoint`]s), and passing that to
+//! ranges (of pairs of [`Endpoint`]s), and passing that to
 //! [`RangeVec::from_vec`].  From that point, we have access to the
 //! set operations on [`RangeVec`] and [`NormalizedRangeIter`].  The
 //! toplevel functions (e.g., [`intersect_vec`] and [`normalize_vec`])
@@ -26,15 +26,15 @@
 //! [`RangeVec`] or a [`Vec`] (or [`SmallVec`]) but it's annoying to
 //! track by hand.
 //!
-//! Complementation is tricky when one Handles only closed intervals.
+//! Complementation is tricky when one handles only closed intervals.
 //! We assume [`Endpoint`] types can enumerate values in total order
 //! via [`Endpoint::decrease_toward`] and [`Endpoint::increase_toward`].
 //! That's nonsense for [densely ordered sets](https://en.wikipedia.org/wiki/Dense_order)
-//! like \\(\mathbb{Q}\\), but tends to work OK on computers: it's trivial
+//! like \\(\mathbb{Q},\\) but tends to work OK on computers: it's trivial
 //! to enumerate bounded integers, and there is such a total order for
-//! the finite set of floating point values.  This sorted enumeration
-//! of floating point values rarely makes sense mathematically, but is
-//! reasonable in some domains, e.g., static program analysis.
+//! the finite set of floating point values.  Mathematically, this sorted
+//! enumeration of floating point values makes no sense, nevertheless,
+//! it can be useful in some domains, e.g., static program analysis.
 //!
 //! All operations take at most linear space and \\(\mathcal{O}(n \log
 //! n)\\) time, where \\(n\\) is the total number of ranges in all the
@@ -42,19 +42,25 @@
 //! on [`NormalizedRangeIter`] always use constant space, and many
 //! operations on [`RangeVec`] reuse storage.
 //!
-//! The container type ([`SmallVec`] with 2 inline ranges) is
-//! currently hardcoded, for simplicity.  The [`Endpoint`] trait,
-//! however, is fully generic.  This crate comes with an
-//! implementation of [`Endpoint`] for all primitive fixed-width
-//! integer types ([`i8`], [`i16`], [`i32`], [`i64`], [`i128`],
-//! [`u8`], [`u16`], [`u32`], [`u64`] and [`u128`]), for [`isize`] and
-//! [`usize`], and for the standard floating point types [`f32`] and
-//! [`f64`] (from \\(-\infty\\) to \\(+\infty\\), with -0 and +0 as
-//! distinct values).
+//! The container type ([`SmallVec`]`<[_; 2]>`) is hardcoded, for
+//! simplicity.  The [`Endpoint`] trait, however, is fully generic.
+//! This crate comes with implementations of [`Endpoint`] for all
+//! primitive fixed-width integer types ([`i8`], [`i16`], [`i32`], [`i64`],
+//! [`i128`], [`u8`], [`u16`], [`u32`], [`u64`] and [`u128`]), for
+//! [`isize`] and [`usize`], and for the standard floating point
+//! types [`f32`] and [`f64`] (from \\(-\infty\\) to \\(+\infty\\),
+//! with \\(-0\\) and \\(+0\\) as distinct values, and excluding NaNs).
+//!
+//! [`SmallVec`]: https://docs.rs/smallvec/latest/smallvec/struct.SmallVec.html
+//! [`Vec`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 
 #![deny(missing_docs)]
 // https://github.com/taiki-e/cargo-llvm-cov?tab=readme-ov-file#exclude-code-from-coverage
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
+// `cargo build --target thumbv6m-none-eabi` is (maybe?) a decent way to check we don't
+// indirectly use the full stdlib.
+#![no_std]
+extern crate alloc; // for `alloc::Vec`
 
 use smallvec::SmallVec;
 
@@ -81,6 +87,10 @@ pub use intersection::intersect_vec;
 pub use union::union_vec;
 
 /// Inline storage (in ranges) reserved in a [`RangeVec`].
+///
+/// Controlled by the `inline_storage` feature, which is enabled by
+/// default.  When the `inline_storage` feature is *not* enabled,
+/// this constant is set to 0.
 pub const INLINE_SIZE: usize = if cfg!(feature = "inline_storage") {
     2
 } else {
@@ -124,8 +134,8 @@ pub trait Endpoint: Copy {
     /// Implementations may return an arbitrary ordering if that's not
     /// the case.
     ///
-    /// See [`std::cmp::Ord`]
-    fn cmp_end(self, other: Self) -> std::cmp::Ordering;
+    /// See [`core::cmp::Ord`]
+    fn cmp_end(self, other: Self) -> core::cmp::Ordering;
 
     /// Returns the minimum [`Endpoint`] value strictly
     /// greater than `self`, or `None` if there is no
@@ -172,9 +182,9 @@ pub trait Endpoint: Copy {
     /// Compares two ranges of endpoints.
     #[doc(hidden)]
     #[inline(always)]
-    fn cmp_range(left: (Self, Self), right: (Self, Self)) -> std::cmp::Ordering {
+    fn cmp_range(left: (Self, Self), right: (Self, Self)) -> core::cmp::Ordering {
         match left.0.cmp_end(right.0) {
-            std::cmp::Ordering::Equal => left.1.cmp_end(right.1),
+            core::cmp::Ordering::Equal => left.1.cmp_end(right.1),
             any => any,
         }
     }
@@ -183,14 +193,14 @@ pub trait Endpoint: Copy {
     #[doc(hidden)]
     #[inline(always)]
     fn bot_end(self, other: Self) -> Self {
-        std::cmp::min_by(self, other, |x, y| Self::cmp_end(*x, *y))
+        core::cmp::min_by(self, other, |x, y| Self::cmp_end(*x, *y))
     }
 
     /// Returns the min of two endpoints.
     #[doc(hidden)]
     #[inline(always)]
     fn top_end(self, other: Self) -> Self {
-        std::cmp::max_by(self, other, |x, y| Self::cmp_end(*x, *y))
+        core::cmp::max_by(self, other, |x, y| Self::cmp_end(*x, *y))
     }
 }
 
@@ -239,7 +249,7 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
             IntoIter: Iterator<Item: ClosedRange<EndT = <Self::Item as ClosedRange>::EndT>>,
         >,
     ) -> bool {
-        use std::cmp::Ordering;
+        use core::cmp::Ordering;
 
         let mut other = other.into_iter();
         loop {
@@ -392,7 +402,9 @@ type ClosedRangeVal<T> = Pair<<T as ClosedRange>::EndT>;
 
 #[cfg(test)]
 #[cfg_attr(coverage_nightly, coverage(off))]
-fn ranges_to_bits(ranges: &[(u8, u8)]) -> Vec<bool> {
+fn ranges_to_bits(ranges: &[(u8, u8)]) -> alloc::vec::Vec<bool> {
+    use alloc::vec;
+
     let mut marks = vec![false; 256];
 
     for (start, stop) in ranges.iter().copied() {
@@ -410,6 +422,8 @@ fn ranges_to_bits(ranges: &[(u8, u8)]) -> Vec<bool> {
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod test {
     use super::*;
+    use alloc::vec;
+    use alloc::vec::Vec;
 
     #[test]
     fn test_min_max() {

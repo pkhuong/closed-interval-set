@@ -87,14 +87,14 @@ impl<'a, T: 'a + Endpoint> Sequence for &'a [(T, T)] {
 #[allow(dead_code)]
 #[inline(always)]
 fn slice_skip_to_preconditions<T: Endpoint>(this: &[(T, T)], x: (T, T), cursor: &[(T, T)]) {
-    use std::cmp::Ordering; // Safe because `this` and `cursor` are normalized
+    use core::cmp::Ordering; // Safe because `this` and `cursor` are normalized
 
     // `Sequence`s must be sorted
     assert!(this.is_sorted_by(|x, y| T::cmp_range(*x, *y) <= Ordering::Equal));
     assert!(cursor.is_sorted_by(|x, y| T::cmp_range(*x, *y) <= Ordering::Equal));
     // in fact, cursor is a suffix of this.
     assert!(this.len() >= cursor.len());
-    assert!(std::ptr::eq(&this[this.len() - cursor.len()..], cursor));
+    assert!(core::ptr::eq(&this[this.len() - cursor.len()..], cursor));
 
     if let Some(first) = this.first().copied() {
         // There is some element of `this` less than x.
@@ -107,7 +107,7 @@ fn slice_skip_to_preconditions<T: Endpoint>(this: &[(T, T)], x: (T, T), cursor: 
             // x is too small, we're in the second behaviour,
             // and `cursor` must be equal to this.
             assert!(this.len() == cursor.len());
-            assert!(std::ptr::eq(this, cursor));
+            assert!(core::ptr::eq(this, cursor));
         }
     } else {
         // If `this` is empty, we're in the second behaviour.
@@ -118,11 +118,11 @@ fn slice_skip_to_preconditions<T: Endpoint>(this: &[(T, T)], x: (T, T), cursor: 
 #[allow(dead_code)]
 #[inline(always)]
 fn slice_skip_to_guarantees<T: Endpoint>(ret: &[(T, T)], this: &[(T, T)], x: (T, T)) {
-    use std::cmp::Ordering; // Safe because `ret` and `this` are normalized
+    use core::cmp::Ordering; // Safe because `ret` and `this` are normalized
 
     // The return value is a suffix of `this`.
     assert!(ret.len() <= this.len());
-    assert!(std::ptr::eq(ret, &this[this.len() - ret.len()..]));
+    assert!(core::ptr::eq(ret, &this[this.len() - ret.len()..]));
 
     match this.first().copied() {
         // If we initially had a first value less than x...
@@ -138,7 +138,7 @@ fn slice_skip_to_guarantees<T: Endpoint>(ret: &[(T, T)], this: &[(T, T)], x: (T,
         }
         _ => {
             // x was too small, we just return this.
-            assert!(std::ptr::eq(ret, this));
+            assert!(core::ptr::eq(ret, this));
         }
     }
 }
@@ -149,7 +149,7 @@ fn skip_to_linear_search<T: Endpoint>(
     needle: (T, T),
     linear_work_factor: usize,
 ) -> Option<&[(T, T)]> {
-    use std::cmp::Ordering; // Safe because `cursor` is normalized
+    use core::cmp::Ordering; // Safe because `cursor` is normalized
 
     for (idx, y) in cursor.iter().skip(1).enumerate().take(linear_work_factor) {
         if T::cmp_range(*y, needle) >= Ordering::Equal {
@@ -162,7 +162,7 @@ fn skip_to_linear_search<T: Endpoint>(
 
 #[inline(always)]
 fn skip_to_binary_search<T: Endpoint>(haystack: &[(T, T)], needle: (T, T)) -> &[(T, T)] {
-    use std::cmp::Ordering; // Safe because `haystack` is normalized
+    use core::cmp::Ordering; // Safe because `haystack` is normalized
 
     let idx = haystack.partition_point(|x| T::cmp_range(*x, needle) < Ordering::Equal);
     &haystack[idx.saturating_sub(1)..]
@@ -172,6 +172,7 @@ fn skip_to_binary_search<T: Endpoint>(haystack: &[(T, T)], needle: (T, T)) -> &[
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod test {
     use super::*;
+    use alloc::vec::Vec;
 
     #[test]
     fn test_skip_to_slices_subsearch() {
@@ -200,7 +201,7 @@ mod test {
             // Make sure `hit` is a suffix of `sequence`.
             assert!(hit.len() <= sequence.len());
             assert_eq!(hit, &sequence[sequence.len() - hit.len()..]);
-            assert!(std::ptr::eq(hit, &sequence[sequence.len() - hit.len()..]));
+            assert!(core::ptr::eq(hit, &sequence[sequence.len() - hit.len()..]));
 
             if needle <= sequence[0] {
                 assert_eq!(hit, sequence);
@@ -217,7 +218,7 @@ mod test {
             // Now make sure the linear search returns the same thing.
             if let Some(linear_hit) = skip_to_linear_search(sequence, needle, usize::MAX) {
                 assert_eq!(hit, linear_hit);
-                assert!(std::ptr::eq(hit, linear_hit));
+                assert!(core::ptr::eq(hit, linear_hit));
             } else {
                 // If the linear search failed, that's because it got to the end.
                 assert_eq!(hit, &[*sequence.last().unwrap()]);
@@ -271,12 +272,12 @@ mod test {
             // Make sure `hit` is a suffix of `sequence`.
             assert!(hit.len() <= sequence.len());
             assert_eq!(hit, &sequence[sequence.len() - hit.len()..]);
-            assert!(std::ptr::eq(hit, &sequence[sequence.len() - hit.len()..]));
+            assert!(core::ptr::eq(hit, &sequence[sequence.len() - hit.len()..]));
 
             // `hit` should be a suffix of `cursor`
             assert!(hit.len() <= cursor.len());
             assert_eq!(hit, &cursor[cursor.len() - hit.len()..]);
-            assert!(std::ptr::eq(hit, &cursor[cursor.len() - hit.len()..]));
+            assert!(core::ptr::eq(hit, &cursor[cursor.len() - hit.len()..]));
 
             cursor = hit;
             if needle <= sequence[0] {
@@ -296,9 +297,9 @@ mod test {
                 let prefix = &sequence[cursor_start..];
                 let other_hit = sequence.skip_to(needle, prefix);
                 assert_eq!(hit, other_hit);
-                assert!(std::ptr::eq(hit, other_hit));
+                assert!(core::ptr::eq(hit, other_hit));
 
-                if std::ptr::eq(prefix, cursor) {
+                if core::ptr::eq(prefix, cursor) {
                     break;
                 }
             }

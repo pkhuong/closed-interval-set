@@ -1,9 +1,9 @@
 //! Branded wrapper to mark iterators that yield normalized sequences
 //! of ranges, i.e., that are known to contain sorted and fully disjoint
 //! (not adjacent) non-empty ranges.
-use std::iter::DoubleEndedIterator;
-use std::iter::ExactSizeIterator;
-use std::iter::Iterator;
+use core::iter::DoubleEndedIterator;
+use core::iter::ExactSizeIterator;
+use core::iter::Iterator;
 
 use crate::ClosedRange;
 use crate::NormalizedRangeIter;
@@ -69,6 +69,8 @@ impl<T: Iterator<Item: ClosedRange> + ExactSizeIterator> ExactSizeIterator
 #[cfg_attr(coverage_nightly, coverage(off))]
 #[test]
 fn test_iterator_forwarding() {
+    use alloc::vec;
+
     let mut iter = unsafe {
         NormalizedRangeIterWrapper::new_unchecked(vec![(0u8, 1u8), (4u8, 10u8)].into_iter())
     };

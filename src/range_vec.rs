@@ -2,9 +2,10 @@
 //! containers (vectors) and iterators of ranges.  A normalized
 //! sequence of ranges is known to contain sorted and disjoint
 //! non-empty ranges.
+use alloc::vec::Vec;
+use core::iter::DoubleEndedIterator;
+use core::iter::ExactSizeIterator;
 use smallvec::SmallVec;
-use std::iter::DoubleEndedIterator;
-use std::iter::ExactSizeIterator;
 
 use crate::iterator_wrapper::NormalizedRangeIterWrapper;
 use crate::Backing;
@@ -16,6 +17,8 @@ use crate::NormalizedRangeIter;
 ///
 /// This branded wrapper around `SmallVec<[(T, T); 2]>` is the primary
 /// representation for ranges at rest in this [`crate`].
+///
+/// [`SmallVec`]: https://docs.rs/smallvec/latest/smallvec/struct.SmallVec.html
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
 #[repr(transparent)]
 pub struct RangeVec<T: Endpoint> {
@@ -126,7 +129,7 @@ impl<T: Endpoint> IntoIterator for RangeVec<T> {
 impl<'a, T: Endpoint> IntoIterator for &'a RangeVec<T> {
     type Item = (T, T);
     type IntoIter =
-        NormalizedRangeIterWrapper<std::iter::Copied<<&'a Backing<T> as IntoIterator>::IntoIter>>;
+        NormalizedRangeIterWrapper<core::iter::Copied<<&'a Backing<T> as IntoIterator>::IntoIter>>;
 
     #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
@@ -135,7 +138,7 @@ impl<'a, T: Endpoint> IntoIterator for &'a RangeVec<T> {
     }
 }
 
-impl<T: Endpoint> std::ops::Deref for RangeVec<T> {
+impl<T: Endpoint> core::ops::Deref for RangeVec<T> {
     type Target = [(T, T)];
 
     #[inline(always)]

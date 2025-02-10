@@ -30,8 +30,8 @@ pub fn union_vec<T: Endpoint>(
 }
 
 impl<T: Endpoint> RangeVec<T> {
-    /// Constructs the union of this [`RangeVec`] and either a
-    /// [`RangeVec`] or a [`Vec`].
+    /// Constructs the union of this [`RangeVec`] and any of a
+    /// [`RangeVec`], a [`SmallVec`], or a [`Vec`].
     ///
     /// This operation reuses the storage from `self` and takes
     /// \\(\mathcal{O}(n \log n)\\) time, where \\(n\\) is the total
@@ -39,6 +39,9 @@ impl<T: Endpoint> RangeVec<T> {
     /// [`RangeVec::union`], but the constant factors are pretty good.
     ///
     /// See [`union_vec`] for more general types.
+    ///
+    /// [`SmallVec`]: https://docs.rs/smallvec/latest/smallvec/struct.SmallVec.html
+    /// [`Vec`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
     #[inline(always)]
     pub fn into_union(self, other: impl Into<RangeCase<T>>) -> Self {
         #[cfg(feature = "internal_checks")]
@@ -46,7 +49,7 @@ impl<T: Endpoint> RangeVec<T> {
 
         fn doit<T: Endpoint>(mut x: Backing<T>, mut y: Backing<T>) -> RangeVec<T> {
             if y.len() > x.len() {
-                std::mem::swap(&mut x, &mut y);
+                core::mem::swap(&mut x, &mut y);
             }
 
             // More efficient when the first argument is longer
@@ -83,6 +86,8 @@ impl<T: Endpoint> RangeVec<T> {
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod test {
     use super::*;
+    use alloc::vec;
+    use alloc::vec::Vec;
 
     #[test]
     fn test_union_smoke() {

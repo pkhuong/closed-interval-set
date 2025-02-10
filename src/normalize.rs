@@ -18,7 +18,7 @@ pub fn is_normalized<T: Endpoint>(
 ) -> bool {
     #[inline(never)]
     fn doit<T: Endpoint>(mut iter: impl Iterator<Item: ClosedRange<EndT = T>>) -> bool {
-        use std::cmp::Ordering; // Safe because we always check validity, so bogus results are fine
+        use core::cmp::Ordering; // Safe because we always check validity, so bogus results are fine
 
         let mut ret;
         let mut prev_stop;
@@ -69,7 +69,7 @@ pub fn is_normalized<T: Endpoint>(
 /// the original `intervals`).
 #[inline(always)]
 fn normalize_slice<T: Endpoint>(mut intervals: &mut [(T, T)]) -> usize {
-    use std::cmp::Ordering; // Safe because we only use results after validity check
+    use core::cmp::Ordering; // Safe because we only use results after validity check
 
     let first_is_valid = match intervals.first() {
         Some(first) => first.0.is_valid() & first.1.is_valid(),
@@ -180,7 +180,8 @@ pub fn normalize_vec<T: Endpoint>(intervals: impl Into<RangeCase<T>>) -> RangeVe
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod test {
     use super::*;
-    use crate::Backing;
+    use alloc::vec;
+    use alloc::vec::Vec;
 
     #[test]
     fn test_smoke() {
@@ -508,7 +509,7 @@ mod test {
                 let first = ranges[0];
                 if ranges
                     .iter()
-                    .all(|x| f32::cmp_range(*x, first) == std::cmp::Ordering::Equal)
+                    .all(|x| f32::cmp_range(*x, first) == core::cmp::Ordering::Equal)
                 {
                     assert_eq!(ltr, rtl);
                 } else {

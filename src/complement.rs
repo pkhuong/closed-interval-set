@@ -78,7 +78,7 @@ where
         loop {
             let (self_cg, ranges) = self.state.as_mut()?;
             let mut cg = ComplementGenerator::new();
-            std::mem::swap(&mut cg, self_cg);
+            core::mem::swap(&mut cg, self_cg);
 
             let Some(range) = ranges.next() else {
                 self.state = None;
@@ -130,7 +130,7 @@ impl<Ranges> NormalizedRangeIter for ComplementIterator<Ranges> where
 #[inline(never)]
 fn complement_impl<T: Endpoint>(normalized_intervals: Backing<T>) -> RangeVec<T> {
     // safe to compare ranges because they're normalized.
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
 
     let mut intervals = normalized_intervals;
     let mut prefix_len = 0;
@@ -212,6 +212,8 @@ impl<T: Endpoint> RangeVec<T> {
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod test {
     use super::*;
+    use alloc::vec;
+    use alloc::vec::Vec;
     use smallvec::smallvec;
 
     #[test]

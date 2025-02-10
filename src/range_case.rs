@@ -1,6 +1,7 @@
 //! Sometimes we don't care about whether data comes in normalized or
 //! as arbitrary ranges.  This module defines traits and types to help
 //! reduce the burden on callers in such cases.
+use alloc::vec::Vec;
 use smallvec::SmallVec;
 
 use crate::Backing;
@@ -108,6 +109,7 @@ impl<T: Endpoint, const N: usize> From<SmallVec<[(T, T); N]>> for RangeCase<T> {
 #[cfg_attr(coverage_nightly, coverage(off))]
 #[test]
 fn test_smoke() {
+    use alloc::vec;
     use smallvec::smallvec;
 
     let x: RangeCase<_> = vec![(1u8, 2u8)].into();
