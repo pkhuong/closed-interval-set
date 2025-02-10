@@ -1,3 +1,4 @@
+use crate::Backing;
 use crate::ClosedRange;
 use crate::Endpoint;
 use crate::RangeCase;
@@ -18,7 +19,7 @@ pub fn union_vec<T: Endpoint>(
     src: impl IntoIterator<Item: ClosedRange<EndT = T>>,
 ) -> RangeVec<T> {
     fn doit<T: Endpoint>(
-        mut acc: Vec<(T, T)>,
+        mut acc: Backing<T>,
         src: impl Iterator<Item: ClosedRange<EndT = T>>,
     ) -> RangeVec<T> {
         acc.extend(src.map(|range| range.get()));
@@ -43,7 +44,7 @@ impl<T: Endpoint> RangeVec<T> {
         #[cfg(feature = "internal_checks")]
         use crate::NormalizedRangeIter;
 
-        fn doit<T: Endpoint>(mut x: Vec<(T, T)>, mut y: Vec<(T, T)>) -> RangeVec<T> {
+        fn doit<T: Endpoint>(mut x: Backing<T>, mut y: Backing<T>) -> RangeVec<T> {
             if y.len() > x.len() {
                 std::mem::swap(&mut x, &mut y);
             }

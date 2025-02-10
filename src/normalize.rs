@@ -1,5 +1,6 @@
 //! A normalized set of intervals consists of a sorted sequence of
 //! disjoint intervals.
+use crate::Backing;
 use crate::ClosedRange;
 use crate::Endpoint;
 use crate::RangeCase;
@@ -162,7 +163,7 @@ fn normalize_slice<T: Endpoint>(mut intervals: &mut [(T, T)]) -> usize {
 #[inline(always)]
 pub fn normalize_vec<T: Endpoint>(intervals: impl Into<RangeCase<T>>) -> RangeVec<T> {
     #[inline(never)]
-    fn doit<T: Endpoint>(mut intervals: Vec<(T, T)>) -> RangeVec<T> {
+    fn doit<T: Endpoint>(mut intervals: Backing<T>) -> RangeVec<T> {
         let remainder = normalize_slice(&mut intervals[..]);
         intervals.truncate(remainder);
 

@@ -6,6 +6,7 @@ use std::iter::DoubleEndedIterator;
 use std::iter::ExactSizeIterator;
 
 use crate::iterator_wrapper::NormalizedRangeIterWrapper;
+use crate::Backing;
 use crate::Endpoint;
 use crate::NormalizedRangeIter;
 
@@ -16,7 +17,7 @@ use crate::NormalizedRangeIter;
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
 #[repr(transparent)]
 pub struct RangeVec<T: Endpoint> {
-    inner: Vec<(T, T)>,
+    inner: Backing<T>,
 }
 
 impl<T: Endpoint> RangeVec<T> {
@@ -37,7 +38,7 @@ impl<T: Endpoint> RangeVec<T> {
     ///
     /// The caller must check that `inner` is normalized.
     #[inline(always)]
-    pub unsafe fn new_unchecked(inner: Vec<(T, T)>) -> Self {
+    pub unsafe fn new_unchecked(inner: Backing<T>) -> Self {
         #[cfg(any(feature = "internal_checks", debug_assertions))]
         assert!(crate::is_normalized(&inner[..]));
         Self { inner }
@@ -54,13 +55,13 @@ impl<T: Endpoint> RangeVec<T> {
 
     /// Returns a reference to the underlying ranges.
     #[inline(always)]
-    pub fn inner(&self) -> &Vec<(T, T)> {
+    pub fn inner(&self) -> &[(T, T)] {
         &self.inner
     }
 
     /// Extracts the underlying vector of ranges.
     #[inline(always)]
-    pub fn into_inner(self) -> Vec<(T, T)> {
+    pub fn into_inner(self) -> Backing<T> {
         self.inner
     }
 
@@ -92,7 +93,7 @@ impl<T: Endpoint> Default for RangeVec<T> {
 
 impl<T: Endpoint> IntoIterator for RangeVec<T> {
     type Item = (T, T);
-    type IntoIter = NormalizedRangeIterWrapper<<Vec<(T, T)> as IntoIterator>::IntoIter>;
+    type IntoIter = NormalizedRangeIterWrapper<<Backing<T> as IntoIterator>::IntoIter>;
 
     #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
@@ -104,7 +105,7 @@ impl<T: Endpoint> IntoIterator for RangeVec<T> {
 impl<'a, T: Endpoint> IntoIterator for &'a RangeVec<T> {
     type Item = (T, T);
     type IntoIter =
-        NormalizedRangeIterWrapper<std::iter::Copied<<&'a Vec<(T, T)> as IntoIterator>::IntoIter>>;
+        NormalizedRangeIterWrapper<std::iter::Copied<<&'a Backing<T> as IntoIterator>::IntoIter>>;
 
     #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {

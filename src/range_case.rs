@@ -1,6 +1,7 @@
 //! Sometimes we don't care about whether data comes in normalized or
 //! as arbitrary ranges.  This module defines traits and types to help
 //! reduce the burden on callers in such cases.
+use crate::Backing;
 use crate::Endpoint;
 use crate::RangeVec;
 
@@ -10,7 +11,7 @@ use crate::RangeVec;
 /// When a function doesn't care about normalisation *and* doesn't want
 /// ownership, it can simply accept slices `&[(T, T)]`.
 pub struct RangeCase<T: Endpoint> {
-    inner: Vec<(T, T)>,
+    inner: Backing<T>,
     normalized: bool,
 }
 
@@ -41,7 +42,7 @@ impl<T: Endpoint> RangeCase<T> {
     ///
     /// This operation takes constant time.
     #[inline(always)]
-    pub fn into_inner(self) -> Vec<(T, T)> {
+    pub fn into_inner(self) -> Backing<T> {
         self.inner
     }
 
@@ -50,7 +51,7 @@ impl<T: Endpoint> RangeCase<T> {
     ///
     /// This operation takes constant time.
     #[inline(always)]
-    pub fn unerase(self) -> Result<RangeVec<T>, Vec<(T, T)>> {
+    pub fn unerase(self) -> Result<RangeVec<T>, Backing<T>> {
         if self.normalized {
             Ok(unsafe { RangeVec::new_unchecked(self.inner) })
         } else {

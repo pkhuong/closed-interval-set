@@ -1,3 +1,4 @@
+use crate::Backing;
 use crate::ClosedRange;
 use crate::Endpoint;
 use crate::NormalizedRangeIter;
@@ -127,7 +128,7 @@ impl<Ranges> NormalizedRangeIter for ComplementIterator<Ranges> where
 }
 
 #[inline(never)]
-fn complement_impl<T: Endpoint>(normalized_intervals: Vec<(T, T)>) -> RangeVec<T> {
+fn complement_impl<T: Endpoint>(normalized_intervals: Backing<T>) -> RangeVec<T> {
     // safe to compare ranges because they're normalized.
     use std::cmp::Ordering;
 

@@ -77,6 +77,9 @@ pub use complement::complement_vec;
 pub use intersection::intersect_vec;
 pub use union::union_vec;
 
+/// Our internal storage type for [`RangeVec`].
+type Backing<T> = Vec<(T, T)>;
+
 /// An [`Endpoint`] is the left or right limit of a closed interval
 /// `[left, right]`.
 ///
