@@ -12,8 +12,8 @@
 //! [complementation](`NormalizedRangeIter::complement`),
 //! [union](`NormalizedRangeIter::union`), and
 //! [intersection](`NormalizedRangeIter::intersect`) are closed over
-//! the [`NormalizedRangeIter`] trait, so it's feasible to build up a
-//! complex expression (not so complex to need type erasure though)
+//! the [`NormalizedRangeIter`] trait, so it's reasonable to build up
+//! complex expressions of type-erased [`NormalizedRangeIter`]s
 //! before materializing the result to a [`RangeVec`].
 //!
 //! Using this crate usually starts by constructing [`Vec`]s of closed
@@ -59,7 +59,7 @@
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
 // `cargo build --target thumbv6m-none-eabi` is (maybe?) a decent way to check we don't
 // indirectly use the full stdlib.
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 extern crate alloc; // for `alloc::Vec`
 
 use smallvec::SmallVec;
@@ -237,7 +237,7 @@ pub trait ClosedRange: Copy + private::Sealed {
 ///
 /// It's hard to check for this property at runtime, so this
 /// trait is sealed.
-pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRange> {
+pub trait NormalizedRangeIter: private::Sealed + Iterator<Item: ClosedRange> {
     /// Determines whether this range iterator is equivalent to
     /// (represents the same set of values as) another.
     ///
@@ -248,7 +248,10 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
         other: impl IntoNormalizedRangeIter<
             IntoIter: Iterator<Item: ClosedRange<EndT = <Self::Item as ClosedRange>::EndT>>,
         >,
-    ) -> bool {
+    ) -> bool
+    where
+        Self: Sized,
+    {
         use core::cmp::Ordering;
 
         let mut other = other.into_iter();
@@ -273,7 +276,10 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
     ///
     /// The result is also a [`NormalizedRangeIter`].
     #[inline(always)]
-    fn complement(self) -> complement::ComplementIterator<Self> {
+    fn complement(self) -> complement::ComplementIterator<Self>
+    where
+        Self: Sized,
+    {
         complement::ComplementIterator::new(self)
     }
 
@@ -289,9 +295,9 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
     fn intersect_vec<'a>(
         self,
         other: &'a RangeVec<<Self::Item as ClosedRange>::EndT>,
-    ) -> impl 'a + NormalizedRangeIter<Item = Pair<<Self::Item as ClosedRange>::EndT>>
+    ) -> intersection::IntersectionIterator<'a, Self>
     where
-        Self: 'a,
+        Self: 'a + Sized,
     {
         // Unsafe because the interface assumes both arguments are normalized.
         unsafe { crate::intersection::intersect(self, other) }
@@ -314,6 +320,7 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
         <Other as IntoIterator>::IntoIter,
     >
     where
+        Self: Sized,
         Other: IntoNormalizedRangeIter<
             IntoIter: NormalizedRangeIter<
                 Item: ClosedRange<EndT = <Self::Item as ClosedRange>::EndT>,
@@ -340,6 +347,7 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
         <Other as IntoIterator>::IntoIter,
     >
     where
+        Self: Sized,
         Other: IntoNormalizedRangeIter<
             IntoIter: NormalizedRangeIter<
                 Item: ClosedRange<EndT = <Self::Item as ClosedRange>::EndT>,
@@ -353,7 +361,10 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
     ///
     /// This takes time linear in the length of the input iterator (in addition
     /// to the resources used by the iterator itself).
-    fn collect_range_vec(self) -> RangeVec<<Self::Item as ClosedRange>::EndT> {
+    fn collect_range_vec(self) -> RangeVec<<Self::Item as ClosedRange>::EndT>
+    where
+        Self: Sized,
+    {
         #[cfg(feature = "internal_checks")]
         let hint = self.size_hint();
 
@@ -369,6 +380,10 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
         unsafe { RangeVec::new_unchecked(inner) }
     }
 }
+
+/// Boxes of iterators are iterators.
+impl<T: NormalizedRangeIter + ?Sized> private::Sealed for alloc::boxed::Box<T> {}
+impl<T: NormalizedRangeIter + ?Sized> NormalizedRangeIter for alloc::boxed::Box<T> {}
 
 /// A [`IntoNormalizedRangeIter`] is an [`IntoIterator`] that turns
 /// into an [`NormalizedRangeIter`].
@@ -483,6 +498,30 @@ mod test {
                 .collect::<Vec<_>>(),
             ranges
         );
+    }
+
+    #[test]
+    fn test_chain_boxed_iter() {
+        let mut acc: Option<Box<dyn NormalizedRangeIter<Item = (u8, u8)>>> = None;
+
+        for i in 1u8..=4u8 {
+            let vec = RangeVec::from_vec(vec![(2 * i, 10 * i)]);
+
+            acc = match acc.take() {
+                None => Some(Box::new(vec.into_iter())),
+                Some(acc) if i % 2 == 0 => Some(Box::new(acc.intersect(vec.into_iter()))),
+                Some(acc) => Some(Box::new(acc.intersect_vec(Box::leak(Box::new(vec))))),
+            };
+        }
+
+        // Intersection is (8u8, 10u8); union with [0, 6]
+        let singleton: SmallVec<[(u8, u8); 1]> = smallvec::smallvec![(0, 6)];
+        acc = Some(Box::new(
+            acc.unwrap().union(RangeVec::from_smallvec(singleton)),
+        ));
+
+        let expected = RangeVec::from_vec(vec![(7u8, 7u8), (11u8, 255u8)]);
+        assert!(acc.unwrap().complement().eqv(expected));
     }
 
     proptest::proptest! {
