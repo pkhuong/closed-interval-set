@@ -253,6 +253,7 @@ pub trait NormalizedRangeIter: private::Sealed + Sized + Iterator<Item: ClosedRa
 
         let mut other = other.into_iter();
         loop {
+            // No need to fuse, we bail as soon as one iterator returns `None`.
             match (self.next(), other.next()) {
                 (Some(a), Some(b)) => {
                     if Endpoint::cmp_range(a.get(), b.get()) != Ordering::Equal {
