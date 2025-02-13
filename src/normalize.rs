@@ -35,6 +35,8 @@ pub fn is_normalized<T: Endpoint>(
             None => return true,
         }
 
+        // Safe to keep pulling from `iter`: we don't get here
+        // if it returned `None`.
         for (start, stop) in iter.map(|range| range.get()) {
             ret &= start.is_valid() & stop.is_valid();
             // Each range must be valid
