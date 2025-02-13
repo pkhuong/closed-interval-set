@@ -80,6 +80,8 @@ impl<'a, T: Endpoint> Intersector<'a, T> {
 }
 
 pub struct IntersectionIterator<'a, Xs: NormalizedRangeIter> {
+    // No need to fuse: we only call `next` after `None` when
+    // we're called after returning `None`
     xs: Xs,
     intersector: Intersector<'a, <<Xs as Iterator>::Item as ClosedRange>::EndT>,
     curr: Option<ClosedRangeVal<<Xs as Iterator>::Item>>,
@@ -137,6 +139,11 @@ impl<Xs: NormalizedRangeIter> Iterator for IntersectionIterator<'_, Xs> {
 impl<Xs: NormalizedRangeIter> crate::private::Sealed for IntersectionIterator<'_, Xs> {}
 
 impl<Xs: NormalizedRangeIter> crate::NormalizedRangeIter for IntersectionIterator<'_, Xs> {}
+
+impl<Xs: NormalizedRangeIter + core::iter::FusedIterator> core::iter::FusedIterator
+    for IntersectionIterator<'_, Xs>
+{
+}
 
 /// This internal implementation assumes `ys` is normalised.
 #[inline(always)]
