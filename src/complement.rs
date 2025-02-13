@@ -46,6 +46,7 @@ impl<T: Endpoint> ComplementGenerator<T> {
 
 pub struct ComplementIterator<Ranges>
 where
+    // No need to keep this fused: we reset `state = None` when the iterator stops.
     Ranges: Sized + NormalizedRangeIter + Iterator<Item: ClosedRange>,
 {
     state: Option<(
@@ -123,6 +124,13 @@ impl<Ranges> crate::private::Sealed for ComplementIterator<Ranges> where
 }
 
 impl<Ranges> NormalizedRangeIter for ComplementIterator<Ranges> where
+    Ranges: Sized + NormalizedRangeIter + Iterator<Item: ClosedRange>
+{
+}
+
+// We explicitly clear our state when get to the end, so we reliably
+// keep returning `None`.
+impl<Ranges> core::iter::FusedIterator for ComplementIterator<Ranges> where
     Ranges: Sized + NormalizedRangeIter + Iterator<Item: ClosedRange>
 {
 }
@@ -241,6 +249,14 @@ mod test {
             normalize_vec(empty.to_vec()).complement().into_vec(),
             vec![(0u8, 255u8)]
         );
+
+        {
+            let mut universe = normalize_vec(empty.to_vec()).into_iter().complement();
+
+            assert_eq!(universe.next(), Some((0u8, 255u8)));
+            assert_eq!(universe.next(), None); // Then we keep being done.
+            assert_eq!(universe.next(), None);
+        }
 
         {
             let (min, max) = complement(normalize_vec(empty.to_vec())).size_hint();
