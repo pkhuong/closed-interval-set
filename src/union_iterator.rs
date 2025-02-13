@@ -120,6 +120,15 @@ where
 {
 }
 
+// We use `Peekable` internally, so we'll reliably return None after None.
+impl<T, X, Y> core::iter::FusedIterator for UnionIterator<T, X, Y>
+where
+    T: Endpoint,
+    X: Sized + NormalizedRangeIter + Iterator<Item: ClosedRange<EndT = T>>,
+    Y: Sized + NormalizedRangeIter + Iterator<Item: ClosedRange<EndT = T>>,
+{
+}
+
 impl<T: Endpoint> RangeVec<T> {
     /// Constructs the union of this [`RangeVec`] and any iterator of
     /// ranges.
@@ -176,6 +185,17 @@ mod test {
                 .into_vec(),
             src.to_vec()
         );
+
+        {
+            let empty = Vec::<(u8, u8)>::new();
+            let mut union = crate::normalize_vec(empty.clone())
+                .into_iter()
+                .union(crate::normalize_vec(empty).into_iter());
+
+            assert_eq!(union.next(), None);
+            // And still none
+            assert_eq!(union.next(), None);
+        }
     }
 
     proptest::proptest! {
