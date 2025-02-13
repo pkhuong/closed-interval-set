@@ -3,6 +3,7 @@
 //! (not adjacent) non-empty ranges.
 use core::iter::DoubleEndedIterator;
 use core::iter::ExactSizeIterator;
+use core::iter::FusedIterator;
 use core::iter::Iterator;
 
 use crate::ClosedRange;
@@ -62,6 +63,11 @@ impl<T: Iterator<Item: ClosedRange> + DoubleEndedIterator> DoubleEndedIterator
 }
 
 impl<T: Iterator<Item: ClosedRange> + ExactSizeIterator> ExactSizeIterator
+    for NormalizedRangeIterWrapper<T>
+{
+}
+
+impl<T: Iterator<Item: ClosedRange> + FusedIterator> FusedIterator
     for NormalizedRangeIterWrapper<T>
 {
 }
