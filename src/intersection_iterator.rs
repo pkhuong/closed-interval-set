@@ -111,6 +111,15 @@ where
 {
 }
 
+// We use `Peekable` internally, so we'll reliably return None after None.
+impl<T, X, Y> core::iter::FusedIterator for LinearIntersectionIterator<T, X, Y>
+where
+    T: Endpoint,
+    X: Sized + NormalizedRangeIter + Iterator<Item: ClosedRange<EndT = T>>,
+    Y: Sized + NormalizedRangeIter + Iterator<Item: ClosedRange<EndT = T>>,
+{
+}
+
 impl<T: Endpoint> RangeVec<T> {
     /// Constructs the intersection of this [`RangeVec`] and any iterator of
     /// ranges.
@@ -179,6 +188,20 @@ mod test {
 
             assert_eq!(other_empty.size_hint(), (0, Some(0)));
             assert_eq!(&other_empty.collect_range_vec(), &empty);
+        }
+
+        // We can pull multiple times and get `None`.
+        {
+            let mut other_empty = other.iter().intersect(other.iter());
+
+            // We can't know it's empty.
+            assert!(other_empty.size_hint() != (0, Some(0)));
+
+            assert!(other_empty.next().is_some());
+            // Should be done
+            assert_eq!(other_empty.next(), None);
+            // And still done.
+            assert_eq!(other_empty.next(), None);
         }
     }
 
