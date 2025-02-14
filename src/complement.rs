@@ -186,6 +186,7 @@ fn complement_impl<T: Endpoint>(normalized_intervals: Backing<T>) -> RangeVec<T>
 /// it is already normalized, and \\(\mathcal{O}(n \log n)\\) time
 /// otherwise.
 #[inline(always)]
+#[must_use]
 pub fn complement_vec<T: Endpoint>(intervals: impl Into<RangeCase<T>>) -> RangeVec<T> {
     crate::normalize_vec(intervals).into_complement()
 }
@@ -196,6 +197,7 @@ impl<T: Endpoint> RangeVec<T> {
     /// This operation takes linear time and allocates the result at
     /// most in linear space.
     #[inline(always)]
+    #[must_use]
     pub fn complement(&self) -> RangeVec<T> {
         self.iter().complement().collect_range_vec()
     }
@@ -204,6 +206,7 @@ impl<T: Endpoint> RangeVec<T> {
     ///
     /// This operation is in place and takes linear time.
     #[inline(always)]
+    #[must_use]
     pub fn into_complement(self) -> RangeVec<T> {
         #[cfg(feature = "internal_checks")]
         let expected = self.complement();

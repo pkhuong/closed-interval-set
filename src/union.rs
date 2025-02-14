@@ -14,6 +14,7 @@ use crate::RangeVec;
 /// \\(\mathcal{O}(n \log n)\\) time, where \\(n\\) is the total
 /// number of ranges in the two inputs.
 #[inline]
+#[must_use]
 pub fn union_vec<T: Endpoint>(
     acc: impl Into<RangeCase<T>>,
     src: impl IntoIterator<Item: ClosedRange<EndT = T>>,
@@ -43,6 +44,7 @@ impl<T: Endpoint> RangeVec<T> {
     /// [`SmallVec`]: https://docs.rs/smallvec/latest/smallvec/struct.SmallVec.html
     /// [`Vec`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
     #[inline(always)]
+    #[must_use]
     pub fn into_union(self, other: impl Into<RangeCase<T>>) -> Self {
         #[cfg(feature = "internal_checks")]
         use crate::NormalizedRangeIter;

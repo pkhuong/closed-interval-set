@@ -161,6 +161,7 @@ impl<T: Endpoint> RangeVec<T> {
     /// This operation takes at most \\(\mathcal{O}(\min(m + n, m \log n))\\)
     /// time, where \\(m\\) is the size of `self`, and \\(n\\) that of `other`.
     #[inline(always)]
+    #[must_use]
     pub fn intersect_vec<'a>(&'a self, other: &'a RangeVec<T>) -> Self {
         intersect_vec(self, other)
     }
@@ -175,6 +176,7 @@ impl<T: Endpoint> RangeVec<T> {
 /// time, where \\(m\\) is the size of the shorter [`RangeVec`], and
 /// \\(n\\) that of the longer [`RangeVec`].
 #[inline(never)]
+#[must_use]
 pub fn intersect_vec<'a, T: Endpoint>(
     mut xs: &'a RangeVec<T>,
     mut ys: &'a RangeVec<T>,

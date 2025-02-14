@@ -141,6 +141,7 @@ impl<T: Endpoint> RangeVec<T> {
     ///
     /// [`union_vec`]: crate::union_vec
     #[inline(always)]
+    #[must_use]
     pub fn union(&self, other: impl IntoNormalizedRangeIter<Item: ClosedRange<EndT = T>>) -> Self {
         #[inline(never)]
         fn doit<T: Endpoint>(

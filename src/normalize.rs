@@ -13,6 +13,7 @@ use crate::RangeVec;
 ///
 /// Checking this property takes time linear in the length of the input iterator.
 #[inline(always)]
+#[must_use]
 pub fn is_normalized<T: Endpoint>(
     intervals: impl IntoIterator<Item: ClosedRange<EndT = T>>,
 ) -> bool {
@@ -163,6 +164,7 @@ fn normalize_slice<T: Endpoint>(mut intervals: &mut [(T, T)]) -> usize {
 /// \\(\mathcal{O}(n \log n)\\) time in the input size (number of
 /// ranges) in the general case.
 #[inline(always)]
+#[must_use]
 pub fn normalize_vec<T: Endpoint>(intervals: impl Into<RangeCase<T>>) -> RangeVec<T> {
     #[inline(never)]
     fn doit<T: Endpoint>(mut intervals: Backing<T>) -> RangeVec<T> {

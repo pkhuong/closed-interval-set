@@ -243,6 +243,7 @@ pub trait NormalizedRangeIter: private::Sealed + Iterator<Item: ClosedRange> {
     ///
     /// This operation takes constant space and time linear in
     /// the shorter length of the two input iterators.
+    #[must_use]
     fn eqv(
         mut self,
         other: impl IntoNormalizedRangeIter<
@@ -276,6 +277,7 @@ pub trait NormalizedRangeIter: private::Sealed + Iterator<Item: ClosedRange> {
     ///
     /// The result is also a [`NormalizedRangeIter`].
     #[inline(always)]
+    #[must_use]
     fn complement(self) -> complement::ComplementIterator<Self>
     where
         Self: Sized,
@@ -292,6 +294,7 @@ pub trait NormalizedRangeIter: private::Sealed + Iterator<Item: ClosedRange> {
     ///
     /// The result is also a [`NormalizedRangeIter`].
     #[inline(always)]
+    #[must_use]
     fn intersect_vec<'a>(
         self,
         other: &'a RangeVec<<Self::Item as ClosedRange>::EndT>,
@@ -311,6 +314,7 @@ pub trait NormalizedRangeIter: private::Sealed + Iterator<Item: ClosedRange> {
     ///
     /// The result is also a [`NormalizedRangeIter`].
     #[inline(always)]
+    #[must_use]
     fn intersect<Other>(
         self,
         other: Other,
@@ -338,6 +342,7 @@ pub trait NormalizedRangeIter: private::Sealed + Iterator<Item: ClosedRange> {
     ///
     /// The result is also a [`NormalizedRangeIter`].
     #[inline(always)]
+    #[must_use]
     fn union<Other>(
         self,
         other: Other,
@@ -361,6 +366,7 @@ pub trait NormalizedRangeIter: private::Sealed + Iterator<Item: ClosedRange> {
     ///
     /// This takes time linear in the length of the input iterator (in addition
     /// to the resources used by the iterator itself).
+    #[must_use]
     fn collect_range_vec(self) -> RangeVec<<Self::Item as ClosedRange>::EndT>
     where
         Self: Sized,

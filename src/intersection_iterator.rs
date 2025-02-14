@@ -129,6 +129,7 @@ impl<T: Endpoint> RangeVec<T> {
     /// See [`RangeVec::intersect_vec`] when the other argument is
     /// also a [`RangeVec`].
     #[inline(always)]
+    #[must_use]
     pub fn intersect(
         &self,
         other: impl IntoNormalizedRangeIter<Item: ClosedRange<EndT = T>>,
