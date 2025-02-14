@@ -33,7 +33,6 @@ impl<T: Endpoint> RangeCase<T> {
     /// Creates a [`RangeCase`] from a (not necessarily normalized) smallvec of ranges.
     ///
     /// This operation takes constant time.
-    #[inline(always)]
     pub fn from_smallvec<const N: usize>(inner: SmallVec<[(T, T); N]>) -> Self {
         // `INLINE_SIZE == 0` unless inline storage is enabled.
         #[cfg_attr(
