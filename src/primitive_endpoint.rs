@@ -49,6 +49,7 @@ macro_rules! def_endpoint {
 def_endpoint!(i8 i16 i32 i64 i128 isize
               u8 u16 u32 u64 u128 usize);
 
+#[inline]
 fn f32_to_i32(x: f32) -> i32 {
     // This is sign-magnitude.  Convert to i32 by flipping all but
     // the top bit when that bit is set.
@@ -59,6 +60,7 @@ fn f32_to_i32(x: f32) -> i32 {
     (bits ^ (mask - (mask >> 31))) as i32
 }
 
+#[inline]
 fn i32_to_f32(bits: i32) -> f32 {
     // Flip all but the top bit when that bit is set
     let bits = bits as u32;
@@ -68,6 +70,7 @@ fn i32_to_f32(bits: i32) -> f32 {
     f32::from_bits(bits ^ (mask - (mask >> 31)))
 }
 
+#[inline]
 fn f64_to_i64(x: f64) -> i64 {
     // This is sign-magnitude.  Convert to i32 by flipping all but
     // the top bit when that bit is set.
@@ -78,6 +81,7 @@ fn f64_to_i64(x: f64) -> i64 {
     (bits ^ (mask - (mask >> 63))) as i64
 }
 
+#[inline]
 fn i64_to_f64(bits: i64) -> f64 {
     // Flip all but the top bit when that bit is set
     let bits = bits as u64;
@@ -106,12 +110,10 @@ macro_rules! def_float_endpoint {
                     !self.is_nan()
                 }
 
-                #[inline(always)]
                 fn cmp_end(self, other: Self) -> core::cmp::Ordering {
                     $to_int(self).cmp(&$to_int(other))
                 }
 
-                #[inline(always)]
                 fn decrease_toward(self, other: $T) -> Option<$T> {
                     let this = $to_int(self);
                     let other = $to_int(other);
@@ -122,7 +124,6 @@ macro_rules! def_float_endpoint {
                     }
                 }
 
-                #[inline(always)]
                 fn increase_toward(self, other: $T) -> Option<$T> {
                     let this = $to_int(self);
                     let other = $to_int(other);
