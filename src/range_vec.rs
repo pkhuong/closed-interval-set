@@ -3,8 +3,6 @@
 //! sequence of ranges is known to contain sorted and disjoint
 //! non-empty ranges.
 use alloc::vec::Vec;
-use core::iter::DoubleEndedIterator;
-use core::iter::ExactSizeIterator;
 use smallvec::SmallVec;
 
 use crate::iterator_wrapper::NormalizedRangeIterWrapper;
@@ -93,7 +91,7 @@ impl<T: Endpoint> RangeVec<T> {
     #[inline(always)]
     pub fn iter(
         &self,
-    ) -> impl '_ + NormalizedRangeIter<Item = (T, T)> + DoubleEndedIterator + ExactSizeIterator
+    ) -> NormalizedRangeIterWrapper<core::iter::Copied<<&'_ Backing<T> as IntoIterator>::IntoIter>>
     {
         let iter = self.inner.iter().copied();
         unsafe { NormalizedRangeIterWrapper::new_unchecked(iter) }
