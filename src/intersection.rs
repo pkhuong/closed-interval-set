@@ -1,5 +1,6 @@
 use crate::slice_sequence::Sequence;
 use crate::ClosedRange;
+use crate::ClosedRangeEnd;
 use crate::ClosedRangeVal;
 use crate::Endpoint;
 use crate::NormalizedRangeIter;
@@ -83,7 +84,7 @@ pub struct IntersectionIterator<'a, Xs: NormalizedRangeIter> {
     // No need to fuse: we only call `next` after `None` when
     // we're called after returning `None`
     xs: Xs,
-    intersector: Intersector<'a, <<Xs as Iterator>::Item as ClosedRange>::EndT>,
+    intersector: Intersector<'a, ClosedRangeEnd<<Xs as Iterator>::Item>>,
     curr: Option<ClosedRangeVal<<Xs as Iterator>::Item>>,
 }
 

@@ -246,9 +246,7 @@ pub trait NormalizedRangeIter: private::Sealed + Iterator<Item: ClosedRange> {
     #[must_use]
     fn eqv(
         mut self,
-        other: impl IntoNormalizedRangeIter<
-            IntoIter: Iterator<Item: ClosedRange<EndT = <Self::Item as ClosedRange>::EndT>>,
-        >,
+        other: impl IntoNormalizedRangeIter<Item: ClosedRange<EndT = ClosedRangeEnd<Self::Item>>>,
     ) -> bool
     where
         Self: Sized,
@@ -297,7 +295,7 @@ pub trait NormalizedRangeIter: private::Sealed + Iterator<Item: ClosedRange> {
     #[must_use]
     fn intersect_vec<'a>(
         self,
-        other: &'a RangeVec<<Self::Item as ClosedRange>::EndT>,
+        other: &'a RangeVec<ClosedRangeEnd<Self::Item>>,
     ) -> intersection::IntersectionIterator<'a, Self>
     where
         Self: 'a + Sized,
@@ -319,17 +317,13 @@ pub trait NormalizedRangeIter: private::Sealed + Iterator<Item: ClosedRange> {
         self,
         other: Other,
     ) -> intersection_iterator::LinearIntersectionIterator<
-        <Self::Item as ClosedRange>::EndT,
+        ClosedRangeEnd<Self::Item>,
         Self,
         <Other as IntoIterator>::IntoIter,
     >
     where
         Self: Sized,
-        Other: IntoNormalizedRangeIter<
-            IntoIter: NormalizedRangeIter<
-                Item: ClosedRange<EndT = <Self::Item as ClosedRange>::EndT>,
-            >,
-        >,
+        Other: IntoNormalizedRangeIter<Item: ClosedRange<EndT = ClosedRangeEnd<Self::Item>>>,
     {
         intersection_iterator::LinearIntersectionIterator::new(self, other.into_iter())
     }
@@ -347,17 +341,13 @@ pub trait NormalizedRangeIter: private::Sealed + Iterator<Item: ClosedRange> {
         self,
         other: Other,
     ) -> union_iterator::UnionIterator<
-        <Self::Item as ClosedRange>::EndT,
+        ClosedRangeEnd<Self::Item>,
         Self,
         <Other as IntoIterator>::IntoIter,
     >
     where
         Self: Sized,
-        Other: IntoNormalizedRangeIter<
-            IntoIter: NormalizedRangeIter<
-                Item: ClosedRange<EndT = <Self::Item as ClosedRange>::EndT>,
-            >,
-        >,
+        Other: IntoNormalizedRangeIter<Item: ClosedRange<EndT = ClosedRangeEnd<Self::Item>>>,
     {
         union_iterator::UnionIterator::new(self, other.into_iter())
     }
@@ -367,7 +357,7 @@ pub trait NormalizedRangeIter: private::Sealed + Iterator<Item: ClosedRange> {
     /// This takes time linear in the length of the input iterator (in addition
     /// to the resources used by the iterator itself).
     #[must_use]
-    fn collect_range_vec(self) -> RangeVec<<Self::Item as ClosedRange>::EndT>
+    fn collect_range_vec(self) -> RangeVec<ClosedRangeEnd<Self::Item>>
     where
         Self: Sized,
     {
@@ -419,8 +409,10 @@ impl<T: Endpoint> ClosedRange for &(T, T) {
     }
 }
 
+/// The endpoints of the closed range.
+type ClosedRangeEnd<T> = <T as ClosedRange>::EndT;
 /// The return type of `ClosedRange::get()`.
-type ClosedRangeVal<T> = Pair<<T as ClosedRange>::EndT>;
+type ClosedRangeVal<T> = Pair<ClosedRangeEnd<T>>;
 
 #[cfg(test)]
 #[cfg_attr(coverage_nightly, coverage(off))]

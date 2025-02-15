@@ -1,5 +1,7 @@
 use crate::Backing;
 use crate::ClosedRange;
+use crate::ClosedRangeEnd;
+use crate::ClosedRangeVal;
 use crate::Endpoint;
 use crate::NormalizedRangeIter;
 use crate::RangeCase;
@@ -50,7 +52,7 @@ where
     Ranges: Sized + NormalizedRangeIter + Iterator<Item: ClosedRange>,
 {
     state: Option<(
-        ComplementGenerator<<<Ranges as Iterator>::Item as ClosedRange>::EndT>,
+        ComplementGenerator<ClosedRangeEnd<<Ranges as Iterator>::Item>>,
         Ranges,
     )>,
 }
@@ -67,13 +69,11 @@ where
     }
 }
 
-type Pair<T> = (T, T);
-
 impl<Ranges> Iterator for ComplementIterator<Ranges>
 where
     Ranges: Sized + NormalizedRangeIter + Iterator<Item: ClosedRange>,
 {
-    type Item = Pair<<<Ranges as Iterator>::Item as ClosedRange>::EndT>;
+    type Item = ClosedRangeVal<<Ranges as Iterator>::Item>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
