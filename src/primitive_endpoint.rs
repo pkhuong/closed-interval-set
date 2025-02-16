@@ -53,42 +53,38 @@ def_endpoint!(i8 i16 i32 i64 i128 isize
 fn f32_to_i32(x: f32) -> i32 {
     // This is sign-magnitude.  Convert to i32 by flipping all but
     // the top bit when that bit is set.
-    let bits = x.to_bits();
-    let top = 1u32 << 31;
-    let mask = bits & top;
-
-    (bits ^ (mask - (mask >> 31))) as i32
+    //
+    // Compare with the implementation of
+    // https://doc.rust-lang.org/nightly/std/primitive.f32.html#method.total_cmp
+    let bits = x.to_bits() as i32;
+    let mask = ((bits >> 31) as u32) >> 1;
+    bits ^ (mask as i32)
 }
 
 #[inline]
 fn i32_to_f32(bits: i32) -> f32 {
     // Flip all but the top bit when that bit is set
-    let bits = bits as u32;
-    let top = 1u32 << 31;
-    let mask = bits & top;
+    let mask = ((bits >> 31) as u32) >> 1;
 
-    f32::from_bits(bits ^ (mask - (mask >> 31)))
+    f32::from_bits((bits as u32) ^ mask)
 }
 
 #[inline]
 fn f64_to_i64(x: f64) -> i64 {
-    // This is sign-magnitude.  Convert to i32 by flipping all but
+    // This is sign-magnitude.  Convert to i64 by flipping all but
     // the top bit when that bit is set.
-    let bits = x.to_bits();
-    let top = 1u64 << 63;
-    let mask = bits & top;
+    let bits = x.to_bits() as i64;
+    let mask = ((bits >> 63) as u64) >> 1;
 
-    (bits ^ (mask - (mask >> 63))) as i64
+    bits ^ (mask as i64)
 }
 
 #[inline]
 fn i64_to_f64(bits: i64) -> f64 {
     // Flip all but the top bit when that bit is set
-    let bits = bits as u64;
-    let top = 1u64 << 63;
-    let mask = bits & top;
+    let mask = ((bits >> 63) as u64) >> 1;
 
-    f64::from_bits(bits ^ (mask - (mask >> 63)))
+    f64::from_bits((bits as u64) ^ mask)
 }
 
 macro_rules! def_float_endpoint {

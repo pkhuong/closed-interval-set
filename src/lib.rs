@@ -49,7 +49,8 @@
 //! [`i128`], [`u8`], [`u16`], [`u32`], [`u64`] and [`u128`]), for
 //! [`isize`] and [`usize`], and for the standard floating point
 //! types [`f32`] and [`f64`] (from \\(-\infty\\) to \\(+\infty\\),
-//! with \\(-0\\) and \\(+0\\) as distinct values, and excluding NaNs).
+//! with \\(-0\\) and \\(+0\\) as distinct values, and excluding NaNs,
+//! in the same order as [`f32::total_cmp`] and [`f64::total_cmp`]).
 //!
 //! [`SmallVec`]: https://docs.rs/smallvec/latest/smallvec/struct.SmallVec.html
 //! [`Vec`]: https://doc.rust-lang.org/std/vec/struct.Vec.html

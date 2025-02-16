@@ -11,48 +11,43 @@ fn single_endpoint(x: T) {
 
     if x != T::INFINITY && !x.is_nan() {
         let y = x.next_after().unwrap();
-        if x != 0.0 {
-            assert_eq!(y.partial_cmp(&x), Some(std::cmp::Ordering::Greater));
-        }
+        assert_eq!(y.total_cmp(&x), std::cmp::Ordering::Greater);
     } else if !x.is_nan() {
         assert_eq!(x.next_after(), None);
     }
 
     if x != T::NEG_INFINITY && !x.is_nan() {
         let y = x.prev_before().unwrap();
-        if x != 0.0 {
-            assert_eq!(y.partial_cmp(&x), Some(std::cmp::Ordering::Less));
-        }
+        assert_eq!(y.total_cmp(&x), std::cmp::Ordering::Less);
     } else if !x.is_nan() {
         assert_eq!(x.prev_before(), None);
     }
 }
 
 fn two_endpoints(x: T, y: T) {
-    if x == 0.0 || y == 0.0 {
-        // signed zeros are tested elsewhere.
-        return;
-    }
-    let (x, y) = match x.partial_cmp(&y) {
-        Some(ord) if ord <= std::cmp::Ordering::Equal => (x, y),
-        Some(_) => (y, x),
-        None => return,
+    assert_eq!(x.total_cmp(&y), x.cmp_end(y));
+    assert_eq!(y.total_cmp(&x), y.cmp_end(x));
+
+    let (x, y) = if x.total_cmp(&y) <= std::cmp::Ordering::Equal {
+        (x, y)
+    } else {
+        (y, x)
     };
 
     assert_eq!(x.decrease_toward(y), None);
     assert_eq!(y.increase_toward(x), None);
 
-    if x == y {
+    if x.to_bits() == y.to_bits() {
         assert_eq!(x.increase_toward(y), None);
         assert_eq!(x.decrease_toward(y), None);
         assert_eq!(y.increase_toward(x), None);
         assert_eq!(y.decrease_toward(x), None);
     } else {
         let z = x.increase_toward(y).unwrap();
-        assert_eq!(z.partial_cmp(&x), Some(std::cmp::Ordering::Greater));
+        assert_eq!(z.total_cmp(&x), std::cmp::Ordering::Greater);
 
         let z = y.decrease_toward(x).unwrap();
-        assert_eq!(z.partial_cmp(&y), Some(std::cmp::Ordering::Less));
+        assert_eq!(z.total_cmp(&y), std::cmp::Ordering::Less);
     }
 }
 
