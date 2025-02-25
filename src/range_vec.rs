@@ -159,6 +159,16 @@ impl<T: Endpoint> Default for RangeVec<T> {
     }
 }
 
+impl<T: Endpoint, Item> core::iter::FromIterator<Item> for RangeVec<T>
+where
+    Item: crate::ClosedRange<EndT = T>,
+{
+    #[inline(always)]
+    fn from_iter<It: IntoIterator<Item = Item>>(iter: It) -> Self {
+        Self::from(crate::RangeCase::from_iter(iter))
+    }
+}
+
 impl<T: Endpoint> IntoIterator for RangeVec<T> {
     type Item = (T, T);
     type IntoIter = NormalizedRangeIterWrapper<<Backing<T> as IntoIterator>::IntoIter>;
@@ -223,6 +233,7 @@ fn test_smoke() {
 
     assert_eq!(ranges[0], (2u8, 4u8));
 
+    assert_eq!(&ranges, &RangeVec::from_iter([(2u8, 4u8), (10u8, 20u8)]));
     assert_eq!(&ranges, &ranges.iter().collect_range_vec());
 
     assert!(ranges.eqv(&ranges.iter().collect_range_vec()));
