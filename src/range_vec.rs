@@ -28,7 +28,7 @@ impl<T: Endpoint> RangeVec<T> {
     #[inline(always)]
     pub fn new() -> Self {
         Self {
-            inner: SmallVec::new(),
+            inner: Backing::new(),
         }
     }
 
@@ -49,13 +49,58 @@ impl<T: Endpoint> RangeVec<T> {
         Self { inner }
     }
 
+    /// Returns an empty `RangeVec`.
+    #[inline(always)]
+    pub fn empty_set() -> Self {
+        Default::default()
+    }
+
+    /// Returns a `RangeVec` that covers the whole universe of `T`s.
+    #[inline(always)]
+    pub fn universal_set() -> Self {
+        Self::singleton((T::min_value(), T::max_value()))
+    }
+
+    /// Returns a `RangeVec` that represents the input `range` if it
+    /// is a valid range (inclusing start endpoint less than or equal
+    /// to the inclusive stop endpoint), and the empty set otherwise.
+    ///
+    /// This constructor may intrinsically return an empty set, so it
+    /// accepts anything that may be converted to `Option<(T, T)>`,
+    /// including ranges `(T, T)`.
+    #[inline(always)]
+    pub fn singleton(range: impl Into<Option<(T, T)>>) -> Self {
+        fn doit<T: Endpoint>(maybe_range: Option<(T, T)>) -> RangeVec<T> {
+            let mut inner = Backing::new();
+
+            if let Some((lo, hi)) = maybe_range {
+                if lo.cmp_end(hi) <= core::cmp::Ordering::Equal {
+                    inner.push((lo, hi));
+                }
+            }
+
+            unsafe { RangeVec::new_unchecked(inner) }
+        }
+
+        doit(range.into())
+    }
+
+    /// Normalizes this sequence of ranges into a fresh `RangeVec`.
+    ///
+    /// This operation takes \\(\mathcal{O}(n \log n)\\) time, where
+    /// \\(n\\) is the number of ranges in the `ranges` argument.
+    #[inline(always)]
+    pub fn from(ranges: impl Into<crate::RangeCase<T>>) -> Self {
+        crate::normalize_vec(ranges.into())
+    }
+
     /// Converts `inner` to a normalized [`RangeVec`] in place.
     ///
     /// This operation is in-place and takes \\(\mathcal{O}(n \log n)\\)
     /// time.
     #[inline(always)]
     pub fn from_vec(inner: Vec<(T, T)>) -> Self {
-        crate::normalize_vec(inner)
+        Self::from(inner)
     }
 
     /// Converts `inner` to a normalized [`RangeVec`] in place.
@@ -64,7 +109,7 @@ impl<T: Endpoint> RangeVec<T> {
     /// time.
     #[inline(always)]
     pub fn from_smallvec<const N: usize>(inner: SmallVec<[(T, T); N]>) -> Self {
-        crate::normalize_vec(inner)
+        Self::from(inner)
     }
 
     /// Returns a reference to the underlying ranges.
@@ -108,6 +153,7 @@ impl<T: Endpoint> RangeVec<T> {
 }
 
 impl<T: Endpoint> Default for RangeVec<T> {
+    #[inline(always)]
     fn default() -> Self {
         RangeVec::new()
     }
@@ -154,8 +200,25 @@ fn test_smoke() {
     assert_eq!(RangeVec::<u8>::new(), unsafe {
         RangeVec::new_unchecked(smallvec![])
     });
-    assert!(RangeVec::<u8>::new().is_empty());
+    assert!(RangeVec::<u8>::empty_set().is_empty());
 
+    // Exercise a few other ways to generate the empty set
+    assert_eq!(RangeVec::<u8>::singleton(None), RangeVec::empty_set());
+    assert_eq!(RangeVec::<u8>::singleton((1u8, 0u8)), RangeVec::empty_set());
+    assert_eq!(
+        RangeVec::<u8>::singleton(Some((1u8, 0u8))),
+        RangeVec::empty_set()
+    );
+
+    assert_eq!(
+        RangeVec::<u8>::universal_set(),
+        RangeVec::singleton((0u8, 255u8))
+    );
+
+    assert_eq!(
+        RangeVec::<u8>::universal_set(),
+        RangeVec::from([(0u8, 255u8)])
+    );
     let ranges = unsafe { RangeVec::new_unchecked(smallvec![(2u8, 4u8), (10u8, 20u8)]) };
 
     assert_eq!(ranges[0], (2u8, 4u8));
