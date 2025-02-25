@@ -22,8 +22,8 @@ ahead of time (perhaps by combining different sets together), then
 frozen (as `SmallVec<[(T, T); 2]>`, internally) for read-only access.
 However, its iterator implementations of set complementation, union,
 and intersection are closed over the `NormalizedRangeIter` trait, so
-it's feasible to build up a complex expression (not so complex to need
-type erasure though) before materializing the result to a `RangeVec`.
+it's feasible to build up complex, even type-erased, expression before
+materializing the result to a `RangeVec`.
 
 Related crates
 --------------
