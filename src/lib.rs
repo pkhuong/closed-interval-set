@@ -70,6 +70,7 @@ mod intersection;
 mod intersection_iterator;
 pub mod iterator_wrapper;
 mod normalize;
+mod overloads;
 mod primitive_endpoint;
 mod range_case;
 mod range_vec;
