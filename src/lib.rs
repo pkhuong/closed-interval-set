@@ -240,6 +240,26 @@ pub trait ClosedRange: Copy + private::Sealed {
 /// It's hard to check for this property at runtime, so this
 /// trait is sealed.
 pub trait NormalizedRangeIter: private::Sealed + Iterator<Item: ClosedRange> {
+    /// Determines whether this range iterator represents the empty set.
+    #[inline(always)]
+    #[must_use]
+    fn into_empty_flag(mut self) -> bool
+    where
+        Self: Sized,
+    {
+        self.next().is_none()
+    }
+
+    /// Determines whether this range iterator is non-empty.
+    #[inline(always)]
+    #[must_use]
+    fn into_inhabited_flag(self) -> bool
+    where
+        Self: Sized,
+    {
+        !self.into_empty_flag()
+    }
+
     /// Determines whether this range iterator is equivalent to
     /// (represents the same set of values as) another.
     ///
@@ -498,6 +518,19 @@ mod test {
                 .collect::<Vec<_>>(),
             ranges
         );
+    }
+
+    #[test]
+    fn test_empty_inhabited_iter() {
+        assert!(RangeVec::<u8>::new().into_iter().into_empty_flag());
+        assert!(!RangeVec::<u8>::new().into_iter().into_inhabited_flag());
+
+        assert!(!RangeVec::from_vec(vec![(1u8, 1u8)])
+            .into_iter()
+            .into_empty_flag());
+        assert!(RangeVec::from_vec(vec![(1u8, 1u8)])
+            .into_iter()
+            .into_inhabited_flag());
     }
 
     #[test]
