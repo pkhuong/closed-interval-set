@@ -132,6 +132,15 @@ impl<T: Endpoint> RangeVec<T> {
         self.inner.into_vec()
     }
 
+    /// Determines whether `self` fully contains `other`.
+    pub fn contains(&self, other: &RangeVec<T>) -> bool {
+        // other \in self <==> other /\ -self == emptyset
+        self.iter()
+            .complement()
+            .intersect_vec(other)
+            .into_empty_flag()
+    }
+
     /// Returns an iterator for the underlying normalized ranges.
     #[inline(always)]
     pub fn iter(
@@ -251,4 +260,7 @@ fn test_smoke() {
         ranges.clone().into_vec(),
         ranges.into_iter().collect::<Vec<_>>()
     );
+
+    assert!(RangeVec::singleton((1u8, 10u8)).contains(&RangeVec::singleton((2u8, 4u8))));
+    assert!(!RangeVec::singleton((1u8, 10u8)).contains(&RangeVec::singleton((2u8, 11u8))));
 }
